@@ -66,7 +66,7 @@ class Strategy2Task(BaseTask):
                 timestamp = buy_info['timestamp']
                 pct = price / buy_price
                 if pct > 1.0006:
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0006)
+                    self.sell_market(row['id'], symbol, amount)
                 elif pct > 1.0005:
                     self.sell_limit(row['id'], symbol, amount, buy_price * 1.0005)
                 elif pct > 1.0004:
