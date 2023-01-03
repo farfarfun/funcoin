@@ -45,7 +45,7 @@ class LanzouDirectory(BaseTable):
                 "url": share.url,
                 "pwd": share.pwd
             }
-            self.upsert(values=data)
+            self.upsert(value=data)
             if _dir.name.endswith(".tar"):
                 continue
             self._scan_all_file(fid=data['fid'], path=data['path'])
