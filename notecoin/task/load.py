@@ -22,7 +22,7 @@ class LoadTask(BaseTask):
     @staticmethod
     def parse_week(ds, weeks=0):
         ds = ds
-        first = datetime.strptime(ds, '%Y-%m-%d') - timedelta(weeks=weeks)
+        first = datetime.strptime(ds, '%Y-%m-%d') + timedelta(weeks=weeks)
         first = first - timedelta(days=first.weekday()) - timedelta(days=1)
         first = datetime(first.year, first.month, first.day)
         last = first + timedelta(weeks=1) - timedelta(seconds=1)
