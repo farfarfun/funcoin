@@ -33,39 +33,39 @@ class LanzouDirectory(BaseTable):
     def _scan_all_file(self, fid, path):
         for _dir in self.drive.get_dir_list(fid):
             _path = f'{path}/{_dir.name}'
-            if self.file_exist(_path):
-                continue
-            share = self.drive.get_share_info(fid=_dir.id, is_file=False)
-            data = {
-                "fid": _dir.id,
-                "name": _dir.name,
-                "path": _path,
-                "isfile": 0,
-                "desc": share.desc,
-                "url": share.url,
-                "pwd": share.pwd
-            }
-            self.upsert(value=data)
+            if not self.file_exist(_path):
+                share = self.drive.get_share_info(fid=_dir.id, is_file=False)
+                data = {
+                    "fid": _dir.id,
+                    "name": _dir.name,
+                    "path": _path,
+                    "isfile": 0,
+                    "desc": share.desc,
+                    "url": share.url,
+                    "pwd": share.pwd
+                }
+                self.upsert(value=data)
+
             if _dir.name.endswith(".tar"):
                 continue
-            self._scan_all_file(fid=data['fid'], path=data['path'])
+            self._scan_all_file(fid=_dir.id, path=_path)
 
         for _file in self.drive.get_file_list(fid):
             _path = f'{path}/{_file.name}'
-            if self.file_exist(_path):
-                continue
-            share = self.drive.get_share_info(fid=_file.id, is_file=True)
-            data = {
-                "fid": _file.id,
-                "name": _file.name,
-                "path": _path,
-                "isfile": 1,
-                "downs": _file.downs,
-                "desc": share.desc,
-                "url": share.url,
-                "pwd": share.pwd
-            }
-            self.upsert(value=data)
+
+            if not self.file_exist(_path):
+                share = self.drive.get_share_info(fid=_file.id, is_file=True)
+                data = {
+                    "fid": _file.id,
+                    "name": _file.name,
+                    "path": _path,
+                    "isfile": 1,
+                    "downs": _file.downs,
+                    "desc": share.desc,
+                    "url": share.url,
+                    "pwd": share.pwd
+                }
+                self.upsert(value=data)
 
     def file_exist(self, path):
         s = select(self.table.columns).where(self.table.columns.path == path)

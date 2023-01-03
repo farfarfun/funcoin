@@ -60,3 +60,6 @@ class LoadTradeDailyTask(LoadTask):
         file_pro.change_timeframe('detail')
         file_pro.change_freq('daily')
         file_pro.load_daily(start, end)
+
+
+#LoadKlineDailyTask().refresh('2022-12-31')
