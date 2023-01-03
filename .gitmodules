@@ -1,0 +1,3 @@
+[submodule "noteseries"]
+	path = noteseries
+	url = https://github.com/notechats/noteseries.git
