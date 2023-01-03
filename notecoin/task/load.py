@@ -23,7 +23,7 @@ class LoadTask(BaseTask):
     def parse_week(ds, weeks=0):
         ds = ds
         first = datetime.strptime(ds, '%Y-%m-%d') + timedelta(weeks=weeks)
-        first = first - timedelta(days=first.weekday()) - timedelta(days=1)
+        first = first - timedelta(days=first.weekday())
         first = datetime(first.year, first.month, first.day)
         last = first + timedelta(weeks=1) - timedelta(seconds=1)
         return first, last
@@ -48,6 +48,7 @@ class LoadKlineWeeklyTask(LoadTask):
         file_pro.change_data_type('kline')
         file_pro.change_timeframe('1m')
         file_pro.change_freq('weekly')
+        print((start, end))
         file_pro.load_merge(start, end)
 
 
@@ -62,4 +63,4 @@ class LoadTradeDailyTask(LoadTask):
         file_pro.load_daily(start, end)
 
 
-#LoadKlineDailyTask().refresh('2022-12-31')
+#LoadKlineWeeklyTask().refresh('2021-9-14')
