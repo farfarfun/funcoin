@@ -65,7 +65,7 @@ class LanzouDirectory(BaseTable):
                 "url": share.url,
                 "pwd": share.pwd
             }
-            self.upsert(values=data)
+            self.upsert(value=data)
 
     def file_exist(self, path):
         s = select(self.table.columns).where(self.table.columns.path == path)
