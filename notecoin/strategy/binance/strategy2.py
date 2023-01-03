@@ -66,7 +66,7 @@ class Strategy2Task(BaseTask):
                 timestamp = buy_info['timestamp']
                 if time.time() * 1000 - timestamp > 10 * 60 * 1000 and ((price - buy_price) / price) > 0.0001:
                     logger.info(f"out of time,sell {buy_price} vs {price}")
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0001)
+                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.00005)
                 elif abs((buy_price - price) / price) > 0.0005:
                     logger.info(f"buy price {buy_price} vs {price}")
                     # self.sell_market(row['id'], symbol, amount)
