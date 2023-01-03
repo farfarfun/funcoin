@@ -64,13 +64,22 @@ class Strategy2Task(BaseTask):
                 buy_price = buy_info['price']
                 amount = buy_info['amount']
                 timestamp = buy_info['timestamp']
-                if time.time() * 1000 - timestamp > 10 * 60 * 1000 and ((price - buy_price) / price) > 0.0001:
-                    logger.info(f"out of time,sell {buy_price} vs {price}")
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.00005)
-                elif abs((buy_price - price) / price) > 0.0005:
-                    logger.info(f"buy price {buy_price} vs {price}")
-                    # self.sell_market(row['id'], symbol, amount)
+                pct = price / buy_price
+                if pct > 1.0006:
+                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0006)
+                elif pct > 1.0005:
                     self.sell_limit(row['id'], symbol, amount, buy_price * 1.0005)
+                elif pct > 1.0004:
+                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0004)
+                elif time.time() * 1000 - timestamp > 10 * 60 * 1000 and pct > 1.0001:
+                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.00005)
+                elif time.time() * 1000 - timestamp > 30 * 60 * 1000 and pct >= 0.99999:
+                    self.sell_market(row['id'], symbol, amount)
+                elif time.time() * 1000 - timestamp > 120 * 60 * 1000:
+                    self.sell_market(row['id'], symbol, amount)
+                else:
+                    continue
+                logger.info(f"sell {buy_price} vs {price}")
             except Exception as e:
                 logger.info(f"sell error {e}")
 
