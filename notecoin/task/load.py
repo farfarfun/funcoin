@@ -13,9 +13,9 @@ class LoadTask(BaseTask):
         super(LoadTask, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def parse_day(ds):
+    def parse_day(ds,days=0):
         ds = ds
-        first = datetime.strptime(ds, '%Y-%m-%d') - timedelta(days=1)
+        first = datetime.strptime(ds, '%Y-%m-%d') - timedelta(days=days)
         last = first + timedelta(days=1) - timedelta(seconds=1)
         return first, last
 
