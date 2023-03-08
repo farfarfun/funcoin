@@ -1,4 +1,4 @@
-from notecoin.huobi.client.market import MarketClient
+from darkcoin.huobi.client.market import MarketClient
 
 client = MarketClient()
 tickers = client.get_market_tickers()

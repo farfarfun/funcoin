@@ -1,5 +1,5 @@
-# notecoin
+# darkcoin
 
 ```bash
-pip install notecoin
+pip install darkcoin
 ```

@@ -1,15 +1,15 @@
 import datetime
 import json
 
-import notecoin.okex.v3.account_api as account
-import notecoin.okex.v3.futures_api as future
-import notecoin.okex.v3.index_api as index
-import notecoin.okex.v3.information_api as information
-import notecoin.okex.v3.lever_api as lever
-import notecoin.okex.v3.option_api as option
-import notecoin.okex.v3.spot_api as spot
-import notecoin.okex.v3.swap_api as swap
-import notecoin.okex.v3.system_api as system
+import darkcoin.okex.v3.account_api as account
+import darkcoin.okex.v3.futures_api as future
+import darkcoin.okex.v3.index_api as index
+import darkcoin.okex.v3.information_api as information
+import darkcoin.okex.v3.lever_api as lever
+import darkcoin.okex.v3.option_api as option
+import darkcoin.okex.v3.spot_api as spot
+import darkcoin.okex.v3.swap_api as swap
+import darkcoin.okex.v3.system_api as system
 
 
 def get_timestamp():

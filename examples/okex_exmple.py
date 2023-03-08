@@ -1,7 +1,7 @@
 import time
 
-from notecoin.okex.strategy.domain import OkexCoin
-from notecoin.okex.strategy.utils import account_api
+from darkcoin.okex.strategy.domain import OkexCoin
+from darkcoin.okex.strategy.utils import account_api
 
 
 class CoinList:
