@@ -1,4 +1,4 @@
-from darkcoins.okex.v5.client import (AccountClient, AssetClient, MarketClient,
+from darkcoins.okex.client import (AccountClient, AssetClient, MarketClient,
                                      PublicClient, SubAccountClient,
                                      SystemClient, TradeClient)
 from darktool.secret import read_secret
