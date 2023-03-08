@@ -5,6 +5,8 @@ from darkbuild.tool import read_version
 from setuptools import find_packages, setup
 import time
 
+install_requires = ['darkbuild', 'darksecret']
+
 setup(name='darkcoin',
       version=time.strftime("%Y%m%d%H%M", time.localtime()),
       description='darkcoin',
