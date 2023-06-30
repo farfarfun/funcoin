@@ -5,10 +5,10 @@ from setuptools import find_packages, setup
 install_requires = ['darkbuild', 'darksecret']
 
 
-setup(name='darkcoins',
+setup(name='funcoin',
       version=time.strftime("%Y%m%d%H%M", time.localtime()),
-      description='darkcoins',
-      author='niult',
+      description='funcoin',
+      author='bingtao',
       author_email='1007530194@qq.com',
       url='https://github.com/1007530194',
 
@@ -16,6 +16,6 @@ setup(name='darkcoins',
       package_data={"": ["*.js", "*.*"]},
       install_requires=install_requires,
       entry_points={'console_scripts': [
-          'darkcoin_server = darkcoins.server.script:darkcoin_server',
-          'darkcoin_worker = darkcoins.server.script:darkcoin_worker']},
+          'funcoin_server = funcoin.server.script:funcoin_server',
+          'funcoin_worker = funcoin.server.script:funcoin_worker']},
       )

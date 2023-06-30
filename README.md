@@ -1,5 +1,5 @@
-# darkcoins
+# funcoin
 
 ```bash
-pip install darkcoins
+pip install funcoin
 ```
