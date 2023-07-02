@@ -2,7 +2,7 @@ import time
 from setuptools import find_packages, setup
 
 
-install_requires = ['darkbuild', 'darksecret']
+install_requires = ['darkbuild', 'funsecret']
 
 
 setup(name='funcoin',

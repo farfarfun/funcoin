@@ -3,7 +3,7 @@ import time
 from asyncio import run
 
 import ccxt.pro as ccxtpro
-from notesecret import read_secret
+from funsecret import read_secret
 
 
 async def main():

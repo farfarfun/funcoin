@@ -7,7 +7,7 @@ import pandas as pd
 from funcoin.base.tables.strategy import StrategyTable
 from funcoin.task import AccountTask, BaseTask
 from funcoin.utils import logger
-from notesecret import read_secret
+from funsecret import read_secret
 
 
 class Strategy2Task(BaseTask):

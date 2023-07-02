@@ -1,6 +1,6 @@
 import ccxt
 from funcoin.coins.base.cron import load_month
-from notesecret.secret import read_secret, write_secret
+from funsecret.secret import read_secret, write_secret
 
 path_root = '/home/bingtao/workspace/tmp/funcoin/'
 

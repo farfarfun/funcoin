@@ -1,5 +1,5 @@
 import pymysql
-from notesecret import read_secret
+from funsecret import read_secret
 from pymysql.cursors import DictCursor
 from sqlalchemy import MetaData, Table, create_engine, delete, inspect, select
 from sqlalchemy.dialects.mysql import insert

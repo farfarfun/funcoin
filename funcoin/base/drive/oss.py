@@ -2,7 +2,7 @@ import os.path
 
 import oss2
 from notefile.compress import tarfile
-from notesecret import read_secret
+from funsecret import read_secret
 
 global bucket
 bucket = None
