@@ -14,8 +14,8 @@ class FindNewCoin:
         self.msg_huobi = HuoBiMessage()
         self.work_time = WorkTime()
 
-        api_key = read_secret(cate1='coin', cate2='huobi', cate3='api_key')
-        secret_key = read_secret(cate1='coin', cate2='huobi', cate3='secret_key')
+        api_key = read_secret(cate1="coin", cate2="huobi", cate3="api_key")
+        secret_key = read_secret(cate1="coin", cate2="huobi", cate3="secret_key")
 
         self.generic = GenericClient(api_key=api_key, secret_key=secret_key)
         self.symbol_df_last = None
@@ -27,7 +27,7 @@ class FindNewCoin:
         self.symbol_df_last = self.symbol_df_now = data
 
         for _symbol in data:
-            symbol, state = _symbol['symbol'], _symbol['state']
+            symbol, state = _symbol["symbol"], _symbol["state"]
             self.symbol_dict[symbol] = state
 
     def update(self, data):
@@ -35,7 +35,7 @@ class FindNewCoin:
         self.symbol_df_now = data
 
         for _symbol in data:
-            symbol, state = _symbol['symbol'], _symbol['state']
+            symbol, state = _symbol["symbol"], _symbol["state"]
 
             if symbol not in self.symbol_dict.keys():
                 self.msg_huobi.send_msg(f"new symbol:{symbol}:{state}")
@@ -50,10 +50,10 @@ class FindNewCoin:
                 pass
 
     def new_coin(self, _symbol):
-        symbol, state = _symbol['symbol'], _symbol['state']
-        if state == 'online' and _symbol['quote-currency'] == 'usdt' and not symbol.endswith("3lusdt"):
+        symbol, state = _symbol["symbol"], _symbol["state"]
+        if state == "online" and _symbol["quote-currency"] == "usdt" and not symbol.endswith("3lusdt"):
             trade = TradeOrder()
-            trade.buy(symbol=_symbol['symbol'], amount=50 * _symbol['min-order-value'])
+            trade.buy(symbol=_symbol["symbol"], amount=50 * _symbol["min-order-value"])
             self.msg_huobi.send_msg(f"buy new coin:{symbol}:{self.symbol_dict[symbol]}->{state}")
 
     def run(self):
@@ -98,4 +98,4 @@ find = FindNewCoin()
 find.run()
 
 # ps -elf|grep check_new
-# nohup /root/anaconda3/bin/python3.8 /root/workspace/darkchats/funcoin/funcoin/huobi/strategy/check_new.py >>/root/workspace/tmp/funcoin-check-run-$(date +%Y-%m-%d).log 2>&1 &
+# nohup /root/anaconda3/bin/python3.8 /root/workspace/fundata/funcoin/funcoin/huobi/strategy/check_new.py >>/root/workspace/tmp/funcoin-check-run-$(date +%Y-%m-%d).log 2>&1 &

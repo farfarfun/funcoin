@@ -10,7 +10,7 @@ from darkbuild.manage import BaseServer, ServerManage
 class CoinServer(BaseServer):
     def __init__(self):
         path = os.path.abspath(os.path.dirname(__file__))
-        super(CoinServer, self).__init__('funcoin_server', path)
+        super(CoinServer, self).__init__("funcoin_server", path)
 
     def init(self):
         try:
@@ -18,18 +18,20 @@ class CoinServer(BaseServer):
         except Exception as e:
             print(e)
 
-        self.manage.add_job(server_name='funcoin_server',
-                            directory=self.current_path,
-                            command=f"python funcoin_server.py",
-                            user='bingtao',
-                            stdout_logfile="/darkchats/logs/funcoin/server.log")
+        self.manage.add_job(
+            server_name="funcoin_server",
+            directory=self.current_path,
+            command=f"python funcoin_server.py",
+            user="bingtao",
+            stdout_logfile="/fundata/logs/funcoin/server.log",
+        )
         self.manage.start()
 
 
 class CoinWorker(BaseServer):
     def __init__(self):
         path = os.path.abspath(os.path.dirname(__file__))
-        super(CoinWorker, self).__init__('funcoin_worker', path)
+        super(CoinWorker, self).__init__("funcoin_worker", path)
 
     def init(self):
         try:
@@ -37,26 +39,28 @@ class CoinWorker(BaseServer):
         except Exception as e:
             print(e)
 
-        self.manage.add_job(server_name='funcoin_worker',
-                            directory=self.current_path,
-                            command=f"celery -A funcoin_celery worker -l info",
-                            user='bingtao',
-                            stdout_logfile="/darkchats/logs/funcoin/worker.log")
+        self.manage.add_job(
+            server_name="funcoin_worker",
+            directory=self.current_path,
+            command=f"celery -A funcoin_celery worker -l info",
+            user="bingtao",
+            stdout_logfile="/fundata/logs/funcoin/worker.log",
+        )
         self.manage.start()
 
 
 def funcoin_server():
     args = command_line_parser()
     package = CoinServer()
-    if args.command == 'init':
+    if args.command == "init":
         package.init()
-    elif args.command == 'stop':
+    elif args.command == "stop":
         package.stop()
-    elif args.command == 'start':
+    elif args.command == "start":
         package.start()
-    elif args.command == 'restart':
+    elif args.command == "restart":
         package.restart()
-    elif args.command == 'help':
+    elif args.command == "help":
         info = """
         init
         stop
@@ -69,15 +73,15 @@ def funcoin_server():
 def funcoin_worker():
     args = command_line_parser()
     package = CoinWorker()
-    if args.command == 'init':
+    if args.command == "init":
         package.init()
-    elif args.command == 'stop':
+    elif args.command == "stop":
         package.stop()
-    elif args.command == 'start':
+    elif args.command == "start":
         package.start()
-    elif args.command == 'restart':
+    elif args.command == "restart":
         package.restart()
-    elif args.command == 'help':
+    elif args.command == "help":
         info = """
         init
         stop

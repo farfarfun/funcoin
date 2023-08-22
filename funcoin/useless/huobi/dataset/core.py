@@ -4,22 +4,16 @@ import os
 import time
 from datetime import timedelta
 
-from notedrive.lanzou import LanZouCloud
-from notedrive.tables import SqliteTable
+from fundrive.lanzou import LanZouCloud
+from fundrive.tables import SqliteTable
 
 
 class AutoSaveDetail(SqliteTable):
-    def __init__(self,
-                 db_path=None,
-                 save_freq='d',
-                 fid=-1,
-                 ms=False,
-                 save_key=None,
-                 save_with_clear=True,
-                 *args,
-                 **kwargs):
+    def __init__(
+        self, db_path=None, save_freq="d", fid=-1, ms=False, save_key=None, save_with_clear=True, *args, **kwargs
+    ):
         if db_path is None:
-            db_path = os.path.abspath(os.path.dirname(__file__)) + '/data/coin.db'
+            db_path = os.path.abspath(os.path.dirname(__file__)) + "/data/coin.db"
 
         super(AutoSaveDetail, self).__init__(db_path=db_path, *args, **kwargs)
 
@@ -31,16 +25,16 @@ class AutoSaveDetail(SqliteTable):
         self.last_finish_save_unix = datetime.datetime.now()
         self.last_temp_save_unix = datetime.datetime.now()
 
-        if self.save_freq in ('d', 'D', 'Day', 'day'):
-            self.save_freq = 'd'
-        elif self.save_freq in ('m', 'M', 'mon', 'Mon', 'month', 'Month'):
-            self.save_freq = 'm'
-        elif self.save_freq in ('week', 'Week'):
-            self.save_freq = 'w'
-        elif self.save_freq in ('Y', 'y', 'year', 'Year'):
-            self.save_freq = 'y'
+        if self.save_freq in ("d", "D", "Day", "day"):
+            self.save_freq = "d"
+        elif self.save_freq in ("m", "M", "mon", "Mon", "month", "Month"):
+            self.save_freq = "m"
+        elif self.save_freq in ("week", "Week"):
+            self.save_freq = "w"
+        elif self.save_freq in ("Y", "y", "year", "Year"):
+            self.save_freq = "y"
         else:
-            self.save_freq = 'd'
+            self.save_freq = "d"
 
         self.path_root = os.path.join(os.path.dirname(self.db_path), self.table_name)
         if not os.path.exists(self.path_root):
@@ -60,11 +54,11 @@ class AutoSaveDetail(SqliteTable):
 
         is_finish_save = False
 
-        if self.save_freq in ('d', 'D', 'Day', 'day'):
+        if self.save_freq in ("d", "D", "Day", "day"):
             is_finish_save = self.last_finish_save_unix.day != time_unix.day and time_unix.hour >= 1
-        elif self.save_freq in ('m', 'M', 'mon', 'Mon', 'month', 'Month'):
+        elif self.save_freq in ("m", "M", "mon", "Mon", "month", "Month"):
             is_finish_save = self.last_finish_save_unix.month != time_unix.month and time_unix.hour >= 1
-        elif self.save_freq in ('m', 'M', 'mon', 'Mon', 'month', 'Month'):
+        elif self.save_freq in ("m", "M", "mon", "Mon", "month", "Month"):
             is_finish_save = self.last_finish_save_unix.year != time_unix.year and time_unix.hour >= 1
 
         is_temp_save = abs(self.last_temp_save_unix.hour - time_unix.hour) >= 3
@@ -80,25 +74,25 @@ class AutoSaveDetail(SqliteTable):
         now = now or datetime.datetime.now()
 
         name = self.table_name
-        if self.save_freq in ('d', 'D', 'Day', 'day'):
+        if self.save_freq in ("d", "D", "Day", "day"):
             fmt = "%Y%m%d"
-        elif self.save_freq in ('m', 'M', 'mon', 'Mon', 'month', 'Month'):
+        elif self.save_freq in ("m", "M", "mon", "Mon", "month", "Month"):
             fmt = "%Y%m"
-        elif self.save_freq in ('week', 'Week'):
+        elif self.save_freq in ("week", "Week"):
             fmt = "%Y%U"
-        elif self.save_freq in ('Y', 'y', 'year', 'Year'):
+        elif self.save_freq in ("Y", "y", "year", "Year"):
             fmt = "%Y"
         else:
             fmt = "%Y%m%d"
         if self.save_key is not None:
             start, end = self.between_unix_ms(now)
-            condition = '{key}>={start} and {key}<={end}'.format(key=self.save_key, start=start, end=end)
-            condition2 = '{key}<={end}'.format(key=self.save_key, end=end)
+            condition = "{key}>={start} and {key}<={end}".format(key=self.save_key, start=start, end=end)
+            condition2 = "{key}<={end}".format(key=self.save_key, end=end)
         else:
             condition = None
             condition2 = None
 
-        path = '{}/{}-{}.csv'.format(self.path_root, name, self.last_finish_save_unix.strftime(fmt))
+        path = "{}/{}-{}.csv".format(self.path_root, name, self.last_finish_save_unix.strftime(fmt))
 
         self.to_csv(condition=condition, path=path, index=None)
         if pop:
@@ -110,7 +104,7 @@ class AutoSaveDetail(SqliteTable):
         this_day_start = now.date()
         this_day_end = this_day_start + timedelta(days=1)
         this_week_start = (now - timedelta(days=now.weekday())).date()
-        this_week_end = (this_week_start + timedelta(days=7))
+        this_week_end = this_week_start + timedelta(days=7)
         this_month_start = datetime.datetime(now.year, now.month, 1).date()
         this_month_end = this_month_start + timedelta(days=calendar.monthrange(now.year, now.month)[1])
         this_year_start = datetime.datetime(now.year, 1, 1).date()
@@ -125,13 +119,13 @@ class AutoSaveDetail(SqliteTable):
         this_year_start = self.date2unix(this_year_start.timetuple())
         this_year_end = self.date2unix(this_year_end.timetuple()) - 1
 
-        if self.save_freq in ('d', 'D', 'Day', 'day'):
+        if self.save_freq in ("d", "D", "Day", "day"):
             return this_day_start, this_day_end
-        elif self.save_freq in ('m', 'M', 'mon', 'Mon', 'month', 'Month'):
+        elif self.save_freq in ("m", "M", "mon", "Mon", "month", "Month"):
             return this_month_start, this_month_end
-        elif self.save_freq in ('week', 'Week'):
+        elif self.save_freq in ("week", "Week"):
             return this_week_start, this_week_end
-        elif self.save_freq in ('Y', 'y', 'year', 'Year'):
+        elif self.save_freq in ("Y", "y", "year", "Year"):
             return this_year_start, this_year_end
         else:
             return this_day_start, this_day_end
@@ -143,19 +137,18 @@ class AutoSaveDetail(SqliteTable):
 
 
 class TradeDetail(AutoSaveDetail):
-    def __init__(self, table_name='trade_detail', db_path=None, *args, **kwargs):
+    def __init__(self, table_name="trade_detail", db_path=None, *args, **kwargs):
         if db_path is None:
-            db_path = os.path.abspath(
-                os.path.dirname(__file__)) + '/data/coin.db'
+            db_path = os.path.abspath(os.path.dirname(__file__)) + "/data/coin.db"
 
-        super(TradeDetail, self).__init__(db_path=db_path, ms=True,
-                                          fid=3359101,
-                                          save_key='ts',
-                                          table_name=table_name, *args, **kwargs)
-        self.columns = ['trade_id', 'amount', 'price', 'ts', 'direction']
+        super(TradeDetail, self).__init__(
+            db_path=db_path, ms=True, fid=3359101, save_key="ts", table_name=table_name, *args, **kwargs
+        )
+        self.columns = ["trade_id", "amount", "price", "ts", "direction"]
 
     def create(self):
-        self.execute("""
+        self.execute(
+            """
             create table if not exists {} (
                trade_id       BIGINT         
               ,amount         FLOAT 
@@ -164,37 +157,58 @@ class TradeDetail(AutoSaveDetail):
               ,direction      VARCHAR(5)
               ,primary key (trade_id)           
               )
-            """.format(self.table_name))
+            """.format(
+                self.table_name
+            )
+        )
 
 
 class SymbolInfo(AutoSaveDetail):
-    def __init__(self, table_name='symbol_info', db_path=None, *args, **kwargs):
+    def __init__(self, table_name="symbol_info", db_path=None, *args, **kwargs):
         if db_path is None:
-            db_path = os.path.abspath(
-                os.path.dirname(__file__)) + '/data/coin.db'
+            db_path = os.path.abspath(os.path.dirname(__file__)) + "/data/coin.db"
 
-        super(SymbolInfo, self).__init__(db_path=db_path,
-                                         table_name=table_name,
-                                         save_freq='y',
-                                         fid=3360754,
-                                         save_key='',
-                                         save_with_clear=False,
-                                         *args, **kwargs)
-        self.columns = ['symbol', 'base_currency', 'quote_currency', 'price_precision', 'amount_precision',
-                        'symbol_partition',
-                        'state', 'value_precision',
-                        'min_order_amt', 'max_order_amt',
-                        'limit_order_min_order_amt', 'limit_order_max_order_amt',
-                        'sell_market_min_order_amt', 'sell_market_max_order_amt',
-                        'buy_market_max_order_value',
-                        'min_order_value', 'max_order_value',
-                        'leverage_ratio', 'underlying', 'mgmt_fee_rate', 'charge_time',
-                        'rebal_time', 'rebal_threshold',
-                        'init_nav', 'api_trading'
-                        ]
+        super(SymbolInfo, self).__init__(
+            db_path=db_path,
+            table_name=table_name,
+            save_freq="y",
+            fid=3360754,
+            save_key="",
+            save_with_clear=False,
+            *args,
+            **kwargs
+        )
+        self.columns = [
+            "symbol",
+            "base_currency",
+            "quote_currency",
+            "price_precision",
+            "amount_precision",
+            "symbol_partition",
+            "state",
+            "value_precision",
+            "min_order_amt",
+            "max_order_amt",
+            "limit_order_min_order_amt",
+            "limit_order_max_order_amt",
+            "sell_market_min_order_amt",
+            "sell_market_max_order_amt",
+            "buy_market_max_order_value",
+            "min_order_value",
+            "max_order_value",
+            "leverage_ratio",
+            "underlying",
+            "mgmt_fee_rate",
+            "charge_time",
+            "rebal_time",
+            "rebal_threshold",
+            "init_nav",
+            "api_trading",
+        ]
 
     def create(self):
-        self.execute("""
+        self.execute(
+            """
                 create table if not exists {} (
                 symbol		                    VARCHAR	-- 交易对
                 ,base_currency                  VARCHAR -- 交易对中的基础币种
@@ -223,22 +237,23 @@ class SymbolInfo(AutoSaveDetail):
                 ,api_trading		            VARCHAR	-- API交易使能标记（有效值：enabled, disabled）
                 ,PRIMARY KEY (symbol)
                 )
-                """.format(self.table_name))
+                """.format(
+                self.table_name
+            )
+        )
 
 
 class KlineDetail(AutoSaveDetail):
-    def __init__(self, table_name='kline', db_path=None, *args, **kwargs):
+    def __init__(self, table_name="kline", db_path=None, *args, **kwargs):
         if db_path is None:
-            db_path = os.path.abspath(
-                os.path.dirname(__file__)) + '/data/coin.db'
+            db_path = os.path.abspath(os.path.dirname(__file__)) + "/data/coin.db"
 
-        super(KlineDetail, self).__init__(db_path=db_path,
-                                          save_key='id',
-                                          table_name=table_name, *args, **kwargs)
-        self.columns = ['symbol', 'id', 'amount', 'count', 'open', 'close', 'low', 'high', 'vol']
+        super(KlineDetail, self).__init__(db_path=db_path, save_key="id", table_name=table_name, *args, **kwargs)
+        self.columns = ["symbol", "id", "amount", "count", "open", "close", "low", "high", "vol"]
 
     def create(self):
-        self.execute("""
+        self.execute(
+            """
             create table if not exists {} (
                symbol	VARCHAR	-- 交易对
               ,id	    bigint	-- 调整为新加坡时间的时间戳，单位秒，并以此作为此K线柱的id
@@ -251,84 +266,71 @@ class KlineDetail(AutoSaveDetail):
               ,vol	    float	-- 以报价币种计量的交易量
               ,primary key (symbol,id)           
               )
-            """.format(self.table_name))
+            """.format(
+                self.table_name
+            )
+        )
 
 
 class Kline1MinDetail(KlineDetail):
-    def __init__(self, table_name='kline_1min', db_path=None, *args, **kwargs):
+    def __init__(self, table_name="kline_1min", db_path=None, *args, **kwargs):
         super(Kline1MinDetail, self).__init__(table_name=table_name, fid=3359096, db_path=db_path, *args, **kwargs)
 
 
 class Kline5MinDetail(KlineDetail):
-    def __init__(self, table_name='kline_5min', db_path=None, *args, **kwargs):
+    def __init__(self, table_name="kline_5min", db_path=None, *args, **kwargs):
         super(Kline5MinDetail, self).__init__(table_name=table_name, fid=3359092, db_path=db_path, *args, **kwargs)
 
 
 class Kline15MinDetail(KlineDetail):
-    def __init__(self, table_name='kline_15min', db_path=None, *args, **kwargs):
-        super(Kline15MinDetail, self).__init__(table_name=table_name,
-                                               fid=3359095,
-                                               db_path=db_path,
-                                               *args, **kwargs)
+    def __init__(self, table_name="kline_15min", db_path=None, *args, **kwargs):
+        super(Kline15MinDetail, self).__init__(table_name=table_name, fid=3359095, db_path=db_path, *args, **kwargs)
 
 
 class Kline30MinDetail(KlineDetail):
-    def __init__(self, table_name='kline_30min', db_path=None, *args, **kwargs):
-        super(Kline30MinDetail, self).__init__(table_name=table_name,
-                                               db_path=db_path,
-                                               fid=3359097,
-                                               save_freq='m', *args, **kwargs)
+    def __init__(self, table_name="kline_30min", db_path=None, *args, **kwargs):
+        super(Kline30MinDetail, self).__init__(
+            table_name=table_name, db_path=db_path, fid=3359097, save_freq="m", *args, **kwargs
+        )
 
 
 class Kline60MinDetail(KlineDetail):
-    def __init__(self, table_name='kline_60min', db_path=None, *args, **kwargs):
-        super(Kline60MinDetail, self).__init__(table_name=table_name,
-                                               fid=3360759,
-                                               db_path=db_path,
-                                               save_freq='m', *args, **kwargs)
+    def __init__(self, table_name="kline_60min", db_path=None, *args, **kwargs):
+        super(Kline60MinDetail, self).__init__(
+            table_name=table_name, fid=3360759, db_path=db_path, save_freq="m", *args, **kwargs
+        )
 
 
 class Kline4HourDetail(KlineDetail):
-    def __init__(self, table_name='kline_4hour', db_path=None, *args, **kwargs):
-        super(Kline4HourDetail, self).__init__(table_name=table_name,
-                                               save_freq='m',
-                                               fid=3359094,
-                                               db_path=db_path, *args, **kwargs)
+    def __init__(self, table_name="kline_4hour", db_path=None, *args, **kwargs):
+        super(Kline4HourDetail, self).__init__(
+            table_name=table_name, save_freq="m", fid=3359094, db_path=db_path, *args, **kwargs
+        )
 
 
 class Kline1DayDetail(KlineDetail):
-    def __init__(self, table_name='kline_1day', db_path=None, *args, **kwargs):
-        super(Kline1DayDetail, self).__init__(table_name=table_name,
-                                              db_path=db_path,
-                                              fid=3359093,
-                                              save_freq='y', *args, **kwargs)
+    def __init__(self, table_name="kline_1day", db_path=None, *args, **kwargs):
+        super(Kline1DayDetail, self).__init__(
+            table_name=table_name, db_path=db_path, fid=3359093, save_freq="y", *args, **kwargs
+        )
 
 
 class Kline1MonDetail(KlineDetail):
-    def __init__(self, table_name='kline_1mon', db_path=None, *args, **kwargs):
-        super(Kline1MonDetail, self).__init__(table_name=table_name,
-                                              db_path=db_path,
-                                              save_freq='y',
-                                              fid=3359099,
-                                              save_with_clear=False,
-                                              *args, **kwargs)
+    def __init__(self, table_name="kline_1mon", db_path=None, *args, **kwargs):
+        super(Kline1MonDetail, self).__init__(
+            table_name=table_name, db_path=db_path, save_freq="y", fid=3359099, save_with_clear=False, *args, **kwargs
+        )
 
 
 class Kline1WeekDetail(KlineDetail):
-    def __init__(self, table_name='kline_1week', db_path=None, *args, **kwargs):
-        super(Kline1WeekDetail, self).__init__(table_name=table_name,
-                                               db_path=db_path,
-                                               save_freq='y',
-                                               fid=3359098,
-                                               save_with_clear=False,
-                                               *args, **kwargs)
+    def __init__(self, table_name="kline_1week", db_path=None, *args, **kwargs):
+        super(Kline1WeekDetail, self).__init__(
+            table_name=table_name, db_path=db_path, save_freq="y", fid=3359098, save_with_clear=False, *args, **kwargs
+        )
 
 
 class Kline1YearDetail(KlineDetail):
-    def __init__(self, table_name='kline_1year', db_path=None, *args, **kwargs):
-        super(Kline1YearDetail, self).__init__(table_name=table_name,
-                                               db_path=db_path,
-                                               save_freq='y',
-                                               fid=3359091,
-                                               save_with_clear=False,
-                                               *args, **kwargs)
+    def __init__(self, table_name="kline_1year", db_path=None, *args, **kwargs):
+        super(Kline1YearDetail, self).__init__(
+            table_name=table_name, db_path=db_path, save_freq="y", fid=3359091, save_with_clear=False, *args, **kwargs
+        )
