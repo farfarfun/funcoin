@@ -71,17 +71,18 @@ class LanzouDirectory(BaseTable):
 
     def file_exist(self, path):
         s = select(self.table.columns).where(self.table.columns.path == path)
-        data = [line for line in self.engine.execute(s)]
-        return len(data) == 1
+        with self.engine.connect() as conn:
+            data = [line for line in conn.execute(s)]
+            return len(data) == 1
 
     def file_fid(self, path):
         s = select(self.table.columns).where(self.table.columns.path == path)
-        data = [line for line in self.engine.execute(s)]
-
-        if len(data) == 1:
-            return data[0]["fid"]
-        else:
-            return -1
+        with self.engine.connect() as conn:
+            data = [line for line in conn.execute(s)]
+            if len(data) == 1:
+                return data[0]["fid"]
+            else:
+                return -1
 
     def sync(self, path):
         def filter_fun(x):
