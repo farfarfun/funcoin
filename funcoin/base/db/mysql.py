@@ -3,6 +3,7 @@ from funsecret import read_secret
 from pymysql.cursors import DictCursor
 from sqlalchemy import MetaData, Table, create_engine, delete, inspect, select
 from sqlalchemy.dialects.mysql import insert
+from funtool import logger
 
 engine_dict = {}
 meta_dict = {}
@@ -15,12 +16,13 @@ class create_conn(object):
 
     def __enter__(self):
         self.instance = pymysql.connect(
-            host=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='host'),
-            user=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='user'),
-            password=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='password'),
+            host=read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="host"),
+            user=read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="user"),
+            password=read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="password"),
             database=self.database,
             charset="utf8mb4",
-            cursorclass=DictCursor)
+            cursorclass=DictCursor,
+        )
         self._handle = self.instance.cursor()
         return self._handle
 
@@ -35,13 +37,15 @@ def create_database(db_name):
 
 
 def _get_uri(key=None):
-    host = read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='host')
-    port = read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='port') or '3306'
-    user = read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='user')
-    password = read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='password')
-    db_name = 'funcoin' if key is None or len(key) == 0 else f'funcoin_{key.lower()}'
+    host = read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="host")
+    port = read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="port") or "3306"
+    user = read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="user")
+    password = read_secret(cate1="funcoin", cate2="dataset", cate3="mysql", cate4="password")
+    db_name = "funcoin" if key is None or len(key) == 0 else f"funcoin_{key.lower()}"
     create_database(db_name)
-    return f"mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}?charset=utf8"
+    uri = f"mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}?charset=utf8"
+    logger.info(f"uri:{uri}")
+    return uri
 
 
 def _init_engine_meta(key=None):
@@ -81,8 +85,14 @@ class BaseTable:
     def upsert(self, value):
         stmt = insert(self.table).values([value])
         primary_keys = [key.name for key in inspect(self.table).primary_key]
-        update_dict = {c.name: c for c in stmt.inserted if
-                       not c.primary_key and c.name not in ('gmt_create', 'gmt_modified') and c.name in value.keys() and value[c.name] is not None }
+        update_dict = {
+            c.name: c
+            for c in stmt.inserted
+            if not c.primary_key
+            and c.name not in ("gmt_create", "gmt_modified")
+            and c.name in value.keys()
+            and value[c.name] is not None
+        }
         if len(update_dict) == 0:
             return
         stmt = stmt.on_duplicate_key_update(update_dict)
