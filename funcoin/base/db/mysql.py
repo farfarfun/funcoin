@@ -51,7 +51,7 @@ def _get_uri(key=None):
 def _init_engine_meta(key=None):
     engine = create_engine(_get_uri(key=key))
     engine_dict[key] = engine
-    meta_dict[key] = MetaData(bind=engine)
+    meta_dict[key] = MetaData()
 
 
 def get_engine(key=None):
