@@ -2,7 +2,7 @@ import time
 from setuptools import find_packages, setup
 
 
-install_requires = ["darkbuild", "funsecret", "pymysql", "ccxt", "pymysql"]
+install_requires = ["funbuild", "funsecret", "funfile", "pymysql", "ccxt", "pymysql"]
 
 
 setup(

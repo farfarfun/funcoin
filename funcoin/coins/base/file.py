@@ -5,16 +5,16 @@ from datetime import datetime, timedelta
 
 from funcoin.base.drive.lanzou import LanzouDirectory
 from funcoin.coins.base.load import LoadDataKline, LoadTradeKline
-from notefile.compress import tarfile
+from funfile.compress import tarfile
 from tqdm import tqdm
 
 logger = logging.getLogger()
 
 
 def merge_unique(input_csv_list, put_csv):
-    with open(put_csv, 'w') as outfile:
-        for i, csv_file in tqdm(enumerate(input_csv_list), desc='merge files', total=len(input_csv_list)):
-            with open(csv_file, 'r') as infile:
+    with open(put_csv, "w") as outfile:
+        for i, csv_file in tqdm(enumerate(input_csv_list), desc="merge files", total=len(input_csv_list)):
+            with open(csv_file, "r") as infile:
                 if i > 0:
                     next(infile)
                 for line in infile:
@@ -22,15 +22,17 @@ def merge_unique(input_csv_list, put_csv):
 
 
 class FileProperty:
-    def __init__(self,
-                 exchange_name='okex',
-                 data_type='kline',
-                 path='~/workspace/tmp',
-                 start_date=datetime.today(),
-                 end_date=datetime.today(),
-                 freq='daily',
-                 timeframe='1m',
-                 file_format='%Y%m%d'):
+    def __init__(
+        self,
+        exchange_name="okex",
+        data_type="kline",
+        path="~/workspace/tmp",
+        start_date=datetime.today(),
+        end_date=datetime.today(),
+        freq="daily",
+        timeframe="1m",
+        file_format="%Y%m%d",
+    ):
         self.path = path
         self.freq = freq
         self.data_type = data_type
@@ -63,13 +65,29 @@ class FileProperty:
 
 
 class DataFileProperty:
-    def __init__(self, exchange, data_type='kline', path='~/workspace/tmp', start_date=datetime.today(),
-                 end_date=datetime.today(), freq='daily', timeframe='1m', file_format='%Y%m%d'):
+    def __init__(
+        self,
+        exchange,
+        data_type="kline",
+        path="~/workspace/tmp",
+        start_date=datetime.today(),
+        end_date=datetime.today(),
+        freq="daily",
+        timeframe="1m",
+        file_format="%Y%m%d",
+    ):
         self.exchange = exchange
         self.data_type = data_type
-        self.file_pro = FileProperty(exchange_name=exchange.name.lower(), path=path, freq=freq,
-                                     data_type=data_type, timeframe=timeframe, start_date=start_date, end_date=end_date,
-                                     file_format=file_format)
+        self.file_pro = FileProperty(
+            exchange_name=exchange.name.lower(),
+            path=path,
+            freq=freq,
+            data_type=data_type,
+            timeframe=timeframe,
+            start_date=start_date,
+            end_date=end_date,
+            file_format=file_format,
+        )
         self.drive = LanzouDirectory(fid=6073401)
 
     def change_freq(self, freq):
@@ -83,9 +101,9 @@ class DataFileProperty:
         self.file_pro.timeframe = timeframe
 
     def sync(self, path):
-        logger.info('sync file')
+        logger.info("sync file")
         self.drive.scan_all_file()
-        self.drive.sync(f'{path}/funcoin')
+        self.drive.sync(f"{path}/funcoin")
 
     def tar_exists(self):
         if self.drive.file_exist(self.file_pro.file_path_tar(False)):
@@ -98,15 +116,21 @@ class DataFileProperty:
             return False
         self.sync(self.file_pro.path)
 
-        logger.info(f'download for {file_pro.file_path_tar(absolute=False)}')
+        logger.info(f"download for {file_pro.file_path_tar(absolute=False)}")
         unix_start, unix_end = int(file_pro.start_date.timestamp() * 1000), int(file_pro.end_date.timestamp() * 1000)
 
-        if self.data_type == 'kline':
-            exchan = LoadDataKline(self.exchange, unix_start=unix_start,
-                                   unix_end=unix_end, csv_path=file_pro.file_path_csv(), timeframe=file_pro.timeframe)
+        if self.data_type == "kline":
+            exchan = LoadDataKline(
+                self.exchange,
+                unix_start=unix_start,
+                unix_end=unix_end,
+                csv_path=file_pro.file_path_csv(),
+                timeframe=file_pro.timeframe,
+            )
         else:
-            exchan = LoadTradeKline(self.exchange, unix_start=unix_start,
-                                    unix_end=unix_end, csv_path=file_pro.file_path_csv())
+            exchan = LoadTradeKline(
+                self.exchange, unix_start=unix_start, unix_end=unix_end, csv_path=file_pro.file_path_csv()
+            )
         # 下载
         exchan.load_all()
         # 压缩
@@ -121,14 +145,15 @@ class DataFileProperty:
             return False
         self.sync(self.file_pro.path)
 
-        logger.info(f'merge for {file_pro.file_path_tar(absolute=False)}')
+        logger.info(f"merge for {file_pro.file_path_tar(absolute=False)}")
 
         result = []
         for i in range(1000):
             day = copy.deepcopy(file_pro)
-            day.freq = 'daily'
+            day.freq = "daily"
             day.start_date, day.end_date = file_pro.start_date + timedelta(days=i), file_pro.start_date + timedelta(
-                days=i + 1)
+                days=i + 1
+            )
             if day.start_date < file_pro.start_date:
                 continue
             if day.start_date > file_pro.end_date:
