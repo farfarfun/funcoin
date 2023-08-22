@@ -77,10 +77,12 @@ class BaseTable:
         self.meta.create_all(self.engine)
 
     def select_all(self):
-        return self.engine.execute(select([self.table]))
+        with self.engine.connect() as conn:
+            result = conn.execute(select([self.table]))
 
     def delete_all(self):
-        return self.engine.execute(delete(self.table))
+        with self.engine.connect() as conn:
+            result = conn.execute(delete(self.table))
 
     def upsert(self, value):
         stmt = insert(self.table).values([value])
@@ -96,4 +98,5 @@ class BaseTable:
         if len(update_dict) == 0:
             return
         stmt = stmt.on_duplicate_key_update(update_dict)
-        self.engine.execute(stmt)
+        with self.engine.connect() as conn:
+            result = conn.execute(stmt)
