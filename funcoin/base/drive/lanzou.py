@@ -71,13 +71,13 @@ class LanzouDirectory(BaseTable):
                 self.upsert(values=data)
 
     def file_exist(self, path):
-        s = select(self.table.columns).where(FunCoinLanZou.path == path)
+        s = select(self.table).where(FunCoinLanZou.path == path)
         with self.engine.connect() as conn:
             data = [line for line in conn.execute(s)]
             return len(data) == 1
 
     def file_fid(self, path):
-        s = select(self.table.columns).where(FunCoinLanZou.path == path)
+        s = select(self.table).where(FunCoinLanZou.path == path)
         with self.engine.connect() as conn:
             data = [line for line in conn.execute(s)]
             if len(data) == 1:
