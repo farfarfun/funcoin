@@ -1,29 +1,30 @@
-from funcoin.base.db import BaseTable
+from funcoin.base.db import BaseTable, Base
 from fundrive.lanzou import LanZouDrive
-from sqlalchemy import BIGINT, TIMESTAMP, Column, String, Table, func, select
+from sqlalchemy import BIGINT, String, select, UniqueConstraint, DateTime, func
+from sqlalchemy.orm import mapped_column
+
+
+class FunCoinLanZou(Base):
+    __tablename__ = "funcoin_lanzou"
+    __table_args__ = (UniqueConstraint("fid"),)
+
+    fid = (mapped_column(BIGINT, comment="fid", primary_key=True),)
+    gmt_create = (mapped_column(DateTime(timezone=True), server_default=func.now()),)
+    gmt_modified = (mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),)
+    isfile = mapped_column(BIGINT, comment="是否文件", default="1")
+    name = mapped_column(String(100), comment="名称", default="")
+    desc = mapped_column(String(500), comment="描述", default="0")
+    path = mapped_column(String(500), comment="路径", default="")
+    downs = mapped_column(BIGINT, comment="下载次数", default="0")
+    url = mapped_column(String(100), comment="分享链接", default="0")
+    pwd = mapped_column(String(50), comment="提取码", default="0")
 
 
 class LanzouDirectory(BaseTable):
-    def __init__(self, table_name="funcoin_lanzou", fid=5679873, *args, **kwargs):
+    def __init__(self, fid=5679873, *args, **kwargs):
         self.fid = fid
-        super(LanzouDirectory, self).__init__(table_name=table_name, *args, **kwargs)
-        self.table = Table(
-            self.table_name,
-            self.meta,
-            Column("fid", BIGINT, comment="fid", primary_key=True),
-            Column("gmt_create", TIMESTAMP(True), server_default=func.now()),
-            Column("gmt_modified", TIMESTAMP(True), server_default=func.now()),
-            Column("isfile", BIGINT, comment="是否文件", default="1"),
-            Column("name", String(100), comment="名称", default=""),
-            Column("desc", String(500), comment="描述", default="0"),
-            Column("path", String(500), comment="路径", default=""),
-            Column("downs", BIGINT, comment="下载次数", default="0"),
-            Column("url", String(100), comment="分享链接", default="0"),
-            Column("pwd", String(50), comment="提取码", default="0"),
-        )
-        self.create()
+        super(LanzouDirectory, self).__init__(FunCoinLanZou, *args, **kwargs)
         self.drive = LanZouDrive()
-
         self.drive.login_by_cookie()
         self.drive.ignore_limits()
 
@@ -46,7 +47,7 @@ class LanzouDirectory(BaseTable):
                     "url": share.url,
                     "pwd": share.pwd,
                 }
-                self.upsert(value=data)
+                self.upsert(values=data)
 
             if _dir.name.endswith(".tar"):
                 continue
@@ -67,16 +68,16 @@ class LanzouDirectory(BaseTable):
                     "url": share.url,
                     "pwd": share.pwd,
                 }
-                self.upsert(value=data)
+                self.upsert(values=data)
 
     def file_exist(self, path):
-        s = select(self.table.columns).where(self.table.columns.path == path)
+        s = select(self.table.columns).where(FunCoinLanZou.path == path)
         with self.engine.connect() as conn:
             data = [line for line in conn.execute(s)]
             return len(data) == 1
 
     def file_fid(self, path):
-        s = select(self.table.columns).where(self.table.columns.path == path)
+        s = select(self.table.columns).where(FunCoinLanZou.path == path)
         with self.engine.connect() as conn:
             data = [line for line in conn.execute(s)]
             if len(data) == 1:
