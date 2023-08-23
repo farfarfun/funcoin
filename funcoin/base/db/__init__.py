@@ -1,1 +1,1 @@
-from funcoin.base.db.mysql import BaseTable
+from .base import BaseTable
