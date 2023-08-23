@@ -8,9 +8,9 @@ class FunCoinLanZou(Base):
     __tablename__ = "funcoin_lanzou"
     __table_args__ = (UniqueConstraint("fid"),)
 
-    fid = (mapped_column(BIGINT, comment="fid", primary_key=True),)
-    gmt_create = (mapped_column(DateTime(timezone=True), server_default=func.now()),)
-    gmt_modified = (mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()),)
+    fid = mapped_column(BIGINT, comment="fid", primary_key=True)
+    gmt_create = mapped_column(DateTime(timezone=True), server_default=func.now())
+    gmt_modified = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     isfile = mapped_column(BIGINT, comment="是否文件", default="1")
     name = mapped_column(String(100), comment="名称", default="")
     desc = mapped_column(String(500), comment="描述", default="0")
