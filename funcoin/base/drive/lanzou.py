@@ -23,7 +23,7 @@ class FunCoinLanZou(Base):
 class LanzouDirectory(BaseTable):
     def __init__(self, fid=5679873, *args, **kwargs):
         self.fid = fid
-        super(LanzouDirectory, self).__init__(FunCoinLanZou, *args, **kwargs)
+        super(LanzouDirectory, self).__init__(table=FunCoinLanZou, *args, **kwargs)
         self.drive = LanZouDrive()
         self.drive.login_by_cookie()
         self.drive.ignore_limits()
