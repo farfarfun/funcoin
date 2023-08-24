@@ -4,6 +4,8 @@ from sqlalchemy import BIGINT, String, select, UniqueConstraint, DateTime, func
 from sqlalchemy.orm import mapped_column
 from tqdm import tqdm
 
+import os
+
 
 class FunCoinLanZou(Base):
     __tablename__ = "funcoin_lanzou"
@@ -54,7 +56,7 @@ class LanzouDirectory(BaseTable):
                 continue
             self._scan_all_file(fid=_dir.id, path=_path)
 
-        for _file in tqdm(self.drive.get_file_list(fid), desc=f"fid={fid}"):
+        for _file in tqdm(self.drive.get_file_list(fid), desc=f"fid={fid}-{os.path.basename(path)}"):
             _path = f"{path}/{_file.name}"
 
             if not self.file_exist(_path):
