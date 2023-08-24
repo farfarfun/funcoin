@@ -23,15 +23,15 @@ def merge_unique(input_csv_list, put_csv):
 
 class FileProperty:
     def __init__(
-            self,
-            exchange_name="okex",
-            data_type="kline",
-            path="~/workspace/tmp",
-            start_date=datetime.today(),
-            end_date=datetime.today(),
-            freq="daily",
-            timeframe="1m",
-            file_format="%Y%m%d",
+        self,
+        exchange_name="okex",
+        data_type="kline",
+        path="~/workspace/tmp",
+        start_date=datetime.today(),
+        end_date=datetime.today(),
+        freq="daily",
+        timeframe="1m",
+        file_format="%Y%m%d",
     ):
         self.path = path
         self.freq = freq
@@ -66,15 +66,15 @@ class FileProperty:
 
 class DataFileProperty:
     def __init__(
-            self,
-            exchange,
-            data_type="kline",
-            path="~/workspace/tmp",
-            start_date=datetime.today(),
-            end_date=datetime.today(),
-            freq="daily",
-            timeframe="1m",
-            file_format="%Y%m%d",
+        self,
+        exchange,
+        data_type="kline",
+        path="~/workspace/tmp",
+        start_date=datetime.today(),
+        end_date=datetime.today(),
+        freq="daily",
+        timeframe="1m",
+        file_format="%Y%m%d",
     ):
         self.exchange = exchange
         self.data_type = data_type
@@ -103,7 +103,7 @@ class DataFileProperty:
     def sync(self, path):
         logger.info("sync file")
         self.drive.scan_all_file()
-        self.drive.sync(f"{path}/funcoin")
+        self.drive.sync(f"{path}/funcoin", remove_local=False)
 
     def tar_exists(self):
         if self.drive.file_exist(self.file_pro.file_path_tar(absolute=False)):
@@ -121,16 +121,17 @@ class DataFileProperty:
         if not os.path.exists(self.file_pro.file_path_tar()):
             if not os.path.exists(self.file_pro.file_path_csv()):
                 if self.data_type == "kline":
-                    exchan = LoadDataKline(self.exchange,
-                                           unix_start=unix_start,
-                                           unix_end=unix_end,
-                                           csv_path=file_pro.file_path_csv(),
-                                           timeframe=file_pro.timeframe)
+                    exchan = LoadDataKline(
+                        self.exchange,
+                        unix_start=unix_start,
+                        unix_end=unix_end,
+                        csv_path=file_pro.file_path_csv(),
+                        timeframe=file_pro.timeframe,
+                    )
                 else:
-                    exchan = LoadTradeKline(self.exchange,
-                                            unix_start=unix_start,
-                                            unix_end=unix_end,
-                                            csv_path=file_pro.file_path_csv())
+                    exchan = LoadTradeKline(
+                        self.exchange, unix_start=unix_start, unix_end=unix_end, csv_path=file_pro.file_path_csv()
+                    )
                 # 下载
                 exchan.load_all()
             # 压缩
