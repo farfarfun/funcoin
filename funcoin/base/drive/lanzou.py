@@ -88,8 +88,8 @@ class LanzouDirectory(BaseTable):
             else:
                 return -1
 
-    def sync(self, path):
+    def sync(self, path, remove_local=True, *args, **kwargs):
         def filter_fun(x):
             return x.endswith(".csv") or x.startswith("_")
 
-        self.drive.sync_files(path, self.fid, remove_local=True, filter_fun=filter_fun)
+        self.drive.sync_files(path, self.fid, remove_local=remove_local, filter_fun=filter_fun)

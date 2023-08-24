@@ -23,15 +23,15 @@ def merge_unique(input_csv_list, put_csv):
 
 class FileProperty:
     def __init__(
-        self,
-        exchange_name="okex",
-        data_type="kline",
-        path="~/workspace/tmp",
-        start_date=datetime.today(),
-        end_date=datetime.today(),
-        freq="daily",
-        timeframe="1m",
-        file_format="%Y%m%d",
+            self,
+            exchange_name="okex",
+            data_type="kline",
+            path="~/workspace/tmp",
+            start_date=datetime.today(),
+            end_date=datetime.today(),
+            freq="daily",
+            timeframe="1m",
+            file_format="%Y%m%d",
     ):
         self.path = path
         self.freq = freq
@@ -66,15 +66,15 @@ class FileProperty:
 
 class DataFileProperty:
     def __init__(
-        self,
-        exchange,
-        data_type="kline",
-        path="~/workspace/tmp",
-        start_date=datetime.today(),
-        end_date=datetime.today(),
-        freq="daily",
-        timeframe="1m",
-        file_format="%Y%m%d",
+            self,
+            exchange,
+            data_type="kline",
+            path="~/workspace/tmp",
+            start_date=datetime.today(),
+            end_date=datetime.today(),
+            freq="daily",
+            timeframe="1m",
+            file_format="%Y%m%d",
     ):
         self.exchange = exchange
         self.data_type = data_type
@@ -106,10 +106,9 @@ class DataFileProperty:
         self.drive.sync(f"{path}/funcoin")
 
     def tar_exists(self):
-        if self.drive.file_exist(self.file_pro.file_path_tar(False)):
+        if self.drive.file_exist(self.file_pro.file_path_tar(absolute=False)):
             return True
-        if os.path.exists(self.file_pro.file_path_tar()):
-            return False
+        return False
 
     def _daily_load_and_save(self, file_pro: FileProperty) -> bool:
         if self.tar_exists():
@@ -119,23 +118,24 @@ class DataFileProperty:
         logger.info(f"download for {file_pro.file_path_tar(absolute=False)}")
         unix_start, unix_end = int(file_pro.start_date.timestamp() * 1000), int(file_pro.end_date.timestamp() * 1000)
 
-        if self.data_type == "kline":
-            exchan = LoadDataKline(
-                self.exchange,
-                unix_start=unix_start,
-                unix_end=unix_end,
-                csv_path=file_pro.file_path_csv(),
-                timeframe=file_pro.timeframe,
-            )
-        else:
-            exchan = LoadTradeKline(
-                self.exchange, unix_start=unix_start, unix_end=unix_end, csv_path=file_pro.file_path_csv()
-            )
-        # 下载
-        exchan.load_all()
-        # 压缩
-        with tarfile.open(file_pro.file_path_tar(), "w|xz") as tar:
-            tar.add(file_pro.file_path_csv(), arcname=file_pro.arcname(file_pro.file_path_csv()))
+        if not os.path.exists(self.file_pro.file_path_tar()):
+            if not os.path.exists(self.file_pro.file_path_csv()):
+                if self.data_type == "kline":
+                    exchan = LoadDataKline(self.exchange,
+                                           unix_start=unix_start,
+                                           unix_end=unix_end,
+                                           csv_path=file_pro.file_path_csv(),
+                                           timeframe=file_pro.timeframe)
+                else:
+                    exchan = LoadTradeKline(self.exchange,
+                                            unix_start=unix_start,
+                                            unix_end=unix_end,
+                                            csv_path=file_pro.file_path_csv())
+                # 下载
+                exchan.load_all()
+            # 压缩
+            with tarfile.open(file_pro.file_path_tar(), "w|xz") as tar:
+                tar.add(file_pro.file_path_csv(), arcname=file_pro.arcname(file_pro.file_path_csv()))
         # 删除
         os.remove(file_pro.file_path_csv())
         return True
