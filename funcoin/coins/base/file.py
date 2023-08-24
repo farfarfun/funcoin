@@ -138,7 +138,8 @@ class DataFileProperty:
             with tarfile.open(file_pro.file_path_tar(), "w|xz") as tar:
                 tar.add(file_pro.file_path_csv(), arcname=file_pro.arcname(file_pro.file_path_csv()))
         # 删除
-        os.remove(file_pro.file_path_csv())
+        if os.path.exists(file_pro.file_path_csv()):
+            os.remove(file_pro.file_path_csv())
         return True
 
     def _merge_and_save(self, file_pro: FileProperty) -> bool:
