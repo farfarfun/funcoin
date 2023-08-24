@@ -54,7 +54,7 @@ class LanzouDirectory(BaseTable):
                 continue
             self._scan_all_file(fid=_dir.id, path=_path)
 
-        for _file in tqdm(self.drive.get_file_list(fid), desc=fid):
+        for _file in tqdm(self.drive.get_file_list(fid), desc=f"fid={fid}"):
             _path = f"{path}/{_file.name}"
 
             if not self.file_exist(_path):
