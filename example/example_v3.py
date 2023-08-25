@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta
+
 from funcoin.task.load import LoadKlineDailyTask
-from funsecret import read_secret
 
-
-LoadKlineDailyTask().refresh(ds="2023-08-01")
+date = datetime.now()
+for i in range(1, 300):
+    date += timedelta(days=-1)
+    ds = date.strftime("%Y-%m-%d")
+    LoadKlineDailyTask().refresh(ds=ds)
