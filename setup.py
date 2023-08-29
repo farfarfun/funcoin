@@ -9,8 +9,9 @@ setup(
     install_requires=install_requires,
     entry_points={
         "console_scripts": [
-            "funcoin_server = funcoin.server.script:funcoin_server",
-            "funcoin_worker = funcoin.server.script:funcoin_worker",
+            "funcoin = funcoin.server.script:funcoin",
+            #"funcoin_server = funcoin.server.script:funcoin_server",
+            #"funcoin_worker = funcoin.server.script:funcoin_worker",
         ]
     },
 )

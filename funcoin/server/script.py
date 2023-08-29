@@ -45,5 +45,7 @@ download_parser.set_defaults(func=download)  # 设置默认函数
 parser_s = subparsers.add_parser("sync", help="sub help")
 parser_s.set_defaults(func=sync)  # 设置默认函数
 
-args = parser.parse_args()
-args.func(args)  # 执行函数功能
+
+def funcoin():
+    args = parser.parse_args()
+    args.func(args)
