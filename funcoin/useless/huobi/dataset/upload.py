@@ -1,6 +1,6 @@
 from fundrive.lanzou import LanZouCloud
-from darktool.log import logger
-from darktool.tool.secret import read_secret
+from funtool.log import logger
+from funtool.tool.secret import read_secret
 
 downer = LanZouCloud()
 downer.ignore_limits()

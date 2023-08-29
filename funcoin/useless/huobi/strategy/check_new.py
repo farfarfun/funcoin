@@ -3,9 +3,9 @@ from time import sleep
 from funcoin.huobi.client import GenericClient
 from funcoin.huobi.strategy.message import HuoBiMessage
 from funcoin.huobi.strategy.trade_order import TradeOrder
-from darktool.time import WorkTime, now2unix
-from darktool.tool.log import logger
-from darktool.tool.secret import read_secret
+from funtool.time import WorkTime, now2unix
+from funtool.tool.log import logger
+from funtool.tool.secret import read_secret
 
 
 class FindNewCoin:

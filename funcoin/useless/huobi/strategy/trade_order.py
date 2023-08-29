@@ -1,7 +1,6 @@
-from funcoin.huobi.client import (AccountClient, GenericClient, MarketClient,
-                                   TradeClient)
+from funcoin.huobi.client import AccountClient, GenericClient, MarketClient, TradeClient
 from funcoin.huobi.constant import OrderType
-from darktool.tool.secret import read_secret
+from funtool.tool.secret import read_secret
 
 
 class TradeOrder:
@@ -15,8 +14,8 @@ class TradeOrder:
         self.init()
 
     def init(self):
-        api_key = read_secret(cate1='coin', cate2='huobi', cate3='api_key')
-        secret_key = read_secret(cate1='coin', cate2='huobi', cate3='secret_key')
+        api_key = read_secret(cate1="coin", cate2="huobi", cate3="api_key")
+        secret_key = read_secret(cate1="coin", cate2="huobi", cate3="secret_key")
         self.market = MarketClient(api_key=api_key, secret_key=secret_key)
         self.generic = GenericClient(api_key=api_key, secret_key=secret_key)
         self.trade = TradeClient(api_key=api_key, secret_key=secret_key)
@@ -25,15 +24,15 @@ class TradeOrder:
 
         account_dict = self.account.get_accounts()
         # print(account_dict.dict_data['data'][0]['id'])
-        self.account_id = account_dict.dict_data['data'][0]['id']
+        self.account_id = account_dict.dict_data["data"][0]["id"]
 
     def buy(self, symbol, amount):
-        source = 'spot-api'
-        return self.trade.create_order(symbol=symbol,
-                                       account_id=self.account_id,
-                                       order_type=OrderType.BUY_MARKET,
-                                       amount=amount,
-                                       source=source,
-                                       price=0)
-
-
+        source = "spot-api"
+        return self.trade.create_order(
+            symbol=symbol,
+            account_id=self.account_id,
+            order_type=OrderType.BUY_MARKET,
+            amount=amount,
+            source=source,
+            price=0,
+        )

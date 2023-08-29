@@ -1,7 +1,7 @@
 from funcoin.huobi.client import GenericClient, MarketClient
 from funcoin.huobi.dataset.core import *
 from funcoin.huobi.history.core import HistoryDownload
-from darktool.tool.secret import read_secret
+from funtool.tool.secret import read_secret
 from tqdm import tqdm
 
 

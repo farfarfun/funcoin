@@ -3,7 +3,7 @@ import os
 import time
 
 import requests
-from darktool.tool.secret import SecretManage
+from funtool.tool.secret import SecretManage
 
 secret = SecretManage()
 print(secret.select_all())

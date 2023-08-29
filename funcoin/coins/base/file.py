@@ -75,7 +75,7 @@ class DataFileProperty:
         freq="daily",
         timeframe="1m",
         file_format="%Y%m%d",
-        download_days=7,
+        download_days=31,
     ):
         self.exchange = exchange
         self.data_type = data_type

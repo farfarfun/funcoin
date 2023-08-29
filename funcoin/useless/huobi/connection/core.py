@@ -1,16 +1,18 @@
 import logging
 
-from funcoin.huobi.connection.impl import (RestApiRequest, WebsocketManage,
-                                            WebsocketRequest,
-                                            WebSocketWatchDog, call_sync,
-                                            call_sync_perforence_test)
-from funcoin.huobi.constant.system import (ApiVersion, HttpMethod,
-                                            WebSocketDefine,
-                                            get_default_server_url)
+from funcoin.huobi.connection.impl import (
+    RestApiRequest,
+    WebsocketManage,
+    WebsocketRequest,
+    WebSocketWatchDog,
+    call_sync,
+    call_sync_perforence_test,
+)
+from funcoin.huobi.constant.system import ApiVersion, HttpMethod, WebSocketDefine, get_default_server_url
 from funcoin.huobi.utils.api_signature import create_signature
 from funcoin.huobi.utils.huobi_api_exception import HuobiApiException
 from funcoin.huobi.utils.url_params_builder import UrlParamsBuilder
-from darktool.log import logger
+from funtool.log import logger
 
 
 class RestApiSyncClient(object):
@@ -121,7 +123,7 @@ class RestApiSyncClient(object):
         request = RestApiRequest()
         request.method = "GET"
         request.host = self.__server_url
-        request.header.update({'Content-Type': 'application/json'})
+        request.header.update({"Content-Type": "application/json"})
         request.url = url + builder.build_url()
         return request
 
@@ -130,7 +132,7 @@ class RestApiSyncClient(object):
         request.method = "POST"
         request.host = self.__server_url
         create_signature(self.__api_key, self.__secret_key, request.method, request.host + url, builder)
-        request.header.update({'Content-Type': 'application/json'})
+        request.header.update({"Content-Type": "application/json"})
         if len(builder.post_list):  # specify for case : /v1/order/batch-orders
             request.post_body = builder.post_list
         else:
@@ -188,14 +190,16 @@ class SubscribeClient(object):
         return request
 
     def create_request_v1(self, subscription_handler, callback, error_handler, is_trade=False):
-        request = self.create_request(subscription_handler=subscription_handler, callback=callback,
-                                      error_handler=error_handler, is_trade=is_trade)
+        request = self.create_request(
+            subscription_handler=subscription_handler, callback=callback, error_handler=error_handler, is_trade=is_trade
+        )
         request.api_version = ApiVersion.VERSION_V1
         return request
 
     def create_request_v2(self, subscription_handler, callback, error_handler, is_trade=False):
-        request = self.create_request(subscription_handler=subscription_handler, callback=callback,
-                                      error_handler=error_handler, is_trade=is_trade)
+        request = self.create_request(
+            subscription_handler=subscription_handler, callback=callback, error_handler=error_handler, is_trade=is_trade
+        )
         request.api_version = ApiVersion.VERSION_V2
         return request
 
@@ -207,8 +211,7 @@ class SubscribeClient(object):
         request = self.create_request_v2(subscription_handler, callback, error_handler, is_trade)
         self.__create_websocket_manage(request)
 
-    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False,
-                              is_mbp_feed=True):
+    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False, is_mbp_feed=True):
         request = self.create_request(subscription_handler, callback, error_handler, is_trade, is_mbp_feed)
         self.__create_websocket_manage(request)
 
@@ -220,7 +223,6 @@ class SubscribeClient(object):
 
 
 class WebSocketReqClient(object):
-
     def __init__(self, api_key=None, secret_key=None, **kwargs):
         """
         Create the subscription client to subscribe the update from server.
@@ -239,7 +241,7 @@ class WebSocketReqClient(object):
             logger = logging.getLogger("huobi-client")
             logger.setLevel(level=logging.INFO)
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
             logger.addHandler(handler)
 
     def __create_websocket_manage(self, request):
@@ -261,7 +263,6 @@ class WebSocketReqClient(object):
         request = self.create_request(subscription_handler, callback, error_handler, is_trade)
         self.__create_websocket_manage(request)
 
-    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False,
-                              is_mbp_feed=True):
+    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False, is_mbp_feed=True):
         request = self.create_request(subscription_handler, callback, error_handler, is_trade, is_mbp_feed)
         self.__create_websocket_manage(request)

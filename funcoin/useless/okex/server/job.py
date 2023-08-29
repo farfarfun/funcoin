@@ -6,7 +6,7 @@ from funcoin.okex.database.client import OkexClientAccountBalance
 from funcoin.okex.websocket.channel import PublicChannel
 from funcoin.okex.websocket.connect import PublicConnect
 from funcoin.okex.websocket.handle import PublicTickers
-from darktool.secret import read_secret
+from funtool.secret import read_secret
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
@@ -15,7 +15,7 @@ logger.setLevel(logging.DEBUG)
 def init():
     uri = "mysql+pymysql://funcoin:funcoin@127.0.0.1:3306/funcoin?charset=utf8&autocommit=true"
     # uri = f'sqlite:///{os.path.abspath(os.path.dirname(__file__))}/funcoin.db'
-    read_secret(cate1='funcoin', cate2='dataset', cate3='db_path', value=uri)
+    read_secret(cate1="funcoin", cate2="dataset", cate3="db_path", value=uri)
 
 
 channel_update_time = time.time()
@@ -29,8 +29,8 @@ def channel_listen():
         return channels
     for _detail in details:
         detail = _detail.json()
-        ccy = detail['ccy']
-        if ccy == 'USDT':
+        ccy = detail["ccy"]
+        if ccy == "USDT":
             continue
         channels.append(PublicChannel.public_tickers().to_json())
     channel_update_time = time.time()

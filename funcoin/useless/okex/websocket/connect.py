@@ -8,7 +8,7 @@ from typing import List
 
 from funcoin.okex.websocket.handle import BaseHandle
 from funcoin.okex.websocket.utils import get_local_timestamp
-from darktool.secret import read_secret
+from funtool.secret import read_secret
 
 from websocket import WebSocket, WebSocketException, create_connection
 
@@ -16,13 +16,23 @@ ping_interval = 30
 
 
 class BaseConnect:
-    def __init__(self, url, channels, api_key=None, secret_key=None, passphrase=None, prefix='websocket',
-                 private=False, *args, **kwargs):
+    def __init__(
+        self,
+        url,
+        channels,
+        api_key=None,
+        secret_key=None,
+        passphrase=None,
+        prefix="websocket",
+        private=False,
+        *args,
+        **kwargs,
+    ):
         self.url = url
         self.channels = channels
-        self.api_key = api_key or read_secret(cate1='coin', cate2='okex', cate3='api_key')
-        self.secret_key = secret_key or read_secret(cate1='coin', cate2='okex', cate3='secret_key')
-        self.passphrase = passphrase or read_secret(cate1='coin', cate2='okex', cate3='passphrase')
+        self.api_key = api_key or read_secret(cate1="coin", cate2="okex", cate3="api_key")
+        self.secret_key = secret_key or read_secret(cate1="coin", cate2="okex", cate3="secret_key")
+        self.passphrase = passphrase or read_secret(cate1="coin", cate2="okex", cate3="passphrase")
         self.private = private
         self.ws: WebSocket = create_connection(self.url)
         self.handles: List[BaseHandle] = []
@@ -60,10 +70,10 @@ class BaseConnect:
             try:
                 handle.solve(res)
             except Exception as e:
-                logging.info(f'error:{e}')
+                logging.info(f"error:{e}")
 
     def ping(self):
-        self.ws.send('ping')
+        self.ws.send("ping")
 
     def subscribe_restart(self):
         self.subscribe_stop()
@@ -73,14 +83,15 @@ class BaseConnect:
         self.ws: WebSocket = create_connection(self.url)
         if self.private:
             timestamp = str(get_local_timestamp())
-            message = timestamp + 'GET' + '/users/self/verify'
-            mac = hmac.new(bytes(self.secret_key, encoding='utf8'), bytes(message, encoding='utf-8'),
-                           digestmod='sha256')
+            message = timestamp + "GET" + "/users/self/verify"
+            mac = hmac.new(
+                bytes(self.secret_key, encoding="utf8"), bytes(message, encoding="utf-8"), digestmod="sha256"
+            )
             sign = base64.b64encode(mac.digest()).decode("utf-8")
-            login_param = {"op": "login", "args": [{"apiKey": self.api_key,
-                                                    "passphrase": self.passphrase,
-                                                    "timestamp": timestamp,
-                                                    "sign": sign}]}
+            login_param = {
+                "op": "login",
+                "args": [{"apiKey": self.api_key, "passphrase": self.passphrase, "timestamp": timestamp, "sign": sign}],
+            }
             login_str = json.dumps(login_param)
         else:
             login_str = json.dumps({"op": "subscribe", "args": self.channels})
@@ -98,15 +109,16 @@ class BaseConnect:
 
 class PublicConnect(BaseConnect):
     def __init__(self, channels, *args, **kwargs):
-        super(PublicConnect, self).__init__(url="wss://ws.okx.com:8443/ws/v5/public",
-                                            channels=channels, *args, **kwargs)
+        super(PublicConnect, self).__init__(
+            url="wss://ws.okx.com:8443/ws/v5/public", channels=channels, *args, **kwargs
+        )
 
 
 class PrivateConnect(BaseConnect):
-
     def __init__(self, channels, *args, **kwargs):
-        super(PrivateConnect, self).__init__(url='wss://ws.okx.com:8443/ws/v5/private', private=True,
-                                             channels=channels, *args, **kwargs)
+        super(PrivateConnect, self).__init__(
+            url="wss://ws.okx.com:8443/ws/v5/private", private=True, channels=channels, *args, **kwargs
+        )
 
 
 class TradeConnect(PrivateConnect):

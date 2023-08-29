@@ -3,7 +3,7 @@ import os
 import time
 
 import requests
-from darktool.tool.secret import read_secret
+from funtool.tool.secret import read_secret
 from wechatpy.enterprise import WeChatClient
 
 
