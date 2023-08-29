@@ -75,6 +75,7 @@ class DataFileProperty:
         freq="daily",
         timeframe="1m",
         file_format="%Y%m%d",
+        download_days=7,
     ):
         self.exchange = exchange
         self.data_type = data_type
@@ -89,6 +90,7 @@ class DataFileProperty:
             file_format=file_format,
         )
         self.drive = LanzouDirectory(fid=6073401)
+        self.download_days = download_days
 
     def change_freq(self, freq):
         self.file_pro.freq = freq
@@ -114,12 +116,15 @@ class DataFileProperty:
         if self.tar_exists():
             return False
         self.sync(self.file_pro.path)
+        if self.download_days < 0:
+            return False
 
         logger.info(f"download for {file_pro.file_path_tar(absolute=False)}")
         unix_start, unix_end = int(file_pro.start_date.timestamp() * 1000), int(file_pro.end_date.timestamp() * 1000)
 
         if not os.path.exists(self.file_pro.file_path_tar()):
             if not os.path.exists(self.file_pro.file_path_csv()):
+                self.download_days -= 1
                 if self.data_type == "kline":
                     exchan = LoadDataKline(
                         self.exchange,

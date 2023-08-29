@@ -1,7 +1,8 @@
 import os
 
-from darkbuild.core.core import command_line_parser
-from darkbuild.manage import BaseServer, ServerManage
+from funbuild.core.core import command_line_parser
+from funbuild.manage import BaseServer, ServerManage
+
 
 # lsof -t -i:8444
 # sudo kill -9 `sudo lsof -t -i:8444`
@@ -21,7 +22,7 @@ class CoinServer(BaseServer):
         self.manage.add_job(
             server_name="funcoin_server",
             directory=self.current_path,
-            command=f"python funcoin_server.py",
+            command="python funcoin_server.py",
             user="bingtao",
             stdout_logfile="/fundata/logs/funcoin/server.log",
         )

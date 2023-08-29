@@ -1,7 +1,7 @@
 from funpypi import setup
 
 
-install_requires = ["funbuild", "funsecret", "funfile", "pymysql", "ccxt", "pymysql"]
+install_requires = ["funbuild", "funsecret", "funfile", "pymysql", "ccxt", "pymysql", "fastapi", "uvicorn"]
 
 
 setup(
