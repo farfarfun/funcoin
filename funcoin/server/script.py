@@ -1,92 +1,49 @@
-import os
+import argparse
+from datetime import datetime
 
-from funbuild.core.core import command_line_parser
-from funbuild.manage import BaseServer, ServerManage
-
-
-# lsof -t -i:8444
-# sudo kill -9 `sudo lsof -t -i:8444`
-
-
-class CoinServer(BaseServer):
-    def __init__(self):
-        path = os.path.abspath(os.path.dirname(__file__))
-        super(CoinServer, self).__init__("funcoin_server", path)
-
-    def init(self):
-        try:
-            self.manage.init()
-        except Exception as e:
-            print(e)
-
-        self.manage.add_job(
-            server_name="funcoin_server",
-            directory=self.current_path,
-            command="python funcoin_server.py",
-            user="bingtao",
-            stdout_logfile="/fundata/logs/funcoin/server.log",
-        )
-        self.manage.start()
+from ccxt import binance
+from funcoin.base.drive.lanzou import LanzouDirectory
+from funcoin.coins.base.file import DataFileProperty
+from funcoin.task.load import LoadTask
 
 
-class CoinWorker(BaseServer):
-    def __init__(self):
-        path = os.path.abspath(os.path.dirname(__file__))
-        super(CoinWorker, self).__init__("funcoin_worker", path)
-
-    def init(self):
-        try:
-            self.manage.init()
-        except Exception as e:
-            print(e)
-
-        self.manage.add_job(
-            server_name="funcoin_worker",
-            directory=self.current_path,
-            command=f"celery -A funcoin_celery worker -l info",
-            user="bingtao",
-            stdout_logfile="/fundata/logs/funcoin/worker.log",
-        )
-        self.manage.start()
+def download(args):
+    ds = args.ds or datetime.now().strftime("%Y-%m-%d")
+    start, end = LoadTask.parse_day(ds, 3650)
+    file_pro = DataFileProperty(exchange=binance(), path=".tmp")
+    file_pro.file_format = "%Y%m%d"
+    file_pro.change_data_type(args.type)
+    file_pro.change_timeframe(args.timeframe)
+    file_pro.change_freq(args.freq)
+    file_pro.load_daily(start, end)
 
 
-def funcoin_server():
-    args = command_line_parser()
-    package = CoinServer()
-    if args.command == "init":
-        package.init()
-    elif args.command == "stop":
-        package.stop()
-    elif args.command == "start":
-        package.start()
-    elif args.command == "restart":
-        package.restart()
-    elif args.command == "help":
-        info = """
-        init
-        stop
-        start
-        restart
-        """
-        print(info)
+def sync(args):
+    lanzou = LanzouDirectory(fid=6073401)
+    lanzou.scan_all_file(clear=False)
 
 
-def funcoin_worker():
-    args = command_line_parser()
-    package = CoinWorker()
-    if args.command == "init":
-        package.init()
-    elif args.command == "stop":
-        package.stop()
-    elif args.command == "start":
-        package.start()
-    elif args.command == "restart":
-        package.restart()
-    elif args.command == "help":
-        info = """
-        init
-        stop
-        start
-        restart
-        """
-        print(info)
+parser = argparse.ArgumentParser(prog="PROG")
+subparsers = parser.add_subparsers(help="sub-command help")
+# 添加子命令
+download_parser = subparsers.add_parser("download", help="download data")
+download_parser.add_argument(
+    "--type",
+    nargs=2,
+    metavar=("kline", "trade"),
+    default="kline",
+    help="What kind of data do you want to download",
+)
+
+download_parser.add_argument("-ds", default=None, help="the date")
+download_parser.add_argument("-days", default=7, type=int, help="the date")
+download_parser.add_argument("--freq", nargs=2, metavar=("daily", "daily"), default="daily", help="")
+download_parser.add_argument("--timeframe", nargs=2, metavar=("1m", "5m"), default="1m", help="")
+download_parser.set_defaults(func=download)  # 设置默认函数
+
+# 添加子命令
+parser_s = subparsers.add_parser("sync", help="sub help")
+parser_s.set_defaults(func=sync)  # 设置默认函数
+
+args = parser.parse_args()
+args.func(args)  # 执行函数功能
