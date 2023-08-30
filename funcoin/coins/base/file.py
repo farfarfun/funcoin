@@ -5,11 +5,16 @@ from datetime import datetime, timedelta
 
 from funcoin.base.drive.lanzou import LanzouDirectory
 from funcoin.coins.base.load import LoadDataKline, LoadTradeKline
-from funcoin.task.load import LoadTask
 from funfile.compress import tarfile
 from tqdm import tqdm
 
 logger = logging.getLogger()
+
+
+def parse_day(days=0):
+    first = datetime.now() - timedelta(days=days)
+    last = first + timedelta(days=1) - timedelta(seconds=1)
+    return first, last
 
 
 def merge_unique(input_csv_list, put_csv):
@@ -193,9 +198,8 @@ class DataFileProperty:
         return True
 
     def load_days(self, days=30):
-        ds = datetime.now().strftime("%Y-%m-%d")
-        for i in range(36500):
-            start_time, end_time = LoadTask.parse_day(ds, i)
+        for i in range(1, 36500):
+            start_time, end_time = parse_day(i)
             self.file_pro.start_date, self.file_pro.end_date = start_time, end_time
             self._daily_load_and_save(self.file_pro)
             if self.download_days < 0:
