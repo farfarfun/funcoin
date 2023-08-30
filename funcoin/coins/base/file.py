@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from funcoin.base.drive.lanzou import LanzouDirectory
 from funcoin.coins.base.load import LoadDataKline, LoadTradeKline
+from funcoin.task.load import LoadTask
 from funfile.compress import tarfile
 from tqdm import tqdm
 
@@ -114,12 +115,11 @@ class DataFileProperty:
             return True
         return False
 
-    def _daily_load_and_save(self, file_pro: FileProperty) -> bool:
+    def _daily_load_and_save(self, file_pro: FileProperty, check_sync=True) -> bool:
         if self.tar_exists():
             return False
-        self.sync(self.file_pro.path)
-        if self.download_days < 0:
-            return False
+        if check_sync:
+            self.sync(self.file_pro.path)
 
         logger.info(f"download for {file_pro.file_path_tar(absolute=False)}")
         unix_start, unix_end = int(file_pro.start_date.timestamp() * 1000), int(file_pro.end_date.timestamp() * 1000)
@@ -191,6 +191,15 @@ class DataFileProperty:
         os.remove(file_pro.file_path_csv())
         [os.remove(csv) for csv in result]
         return True
+
+    def load_days(self, days=30):
+        ds = datetime.now().strftime("%Y-%m-%d")
+        for i in range(36500):
+            start_time, end_time = LoadTask.parse_day(ds, i)
+            self.file_pro.start_date, self.file_pro.end_date = start_time, end_time
+            self._daily_load_and_save(self.file_pro)
+            if self.download_days < 0:
+                return False
 
     def load_daily(self, start_time, end_time):
         self.file_pro.start_date, self.file_pro.end_date = start_time, end_time

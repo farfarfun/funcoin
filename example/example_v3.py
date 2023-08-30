@@ -11,7 +11,10 @@ from funcoin.task.load import LoadTask
 
 def download():
     ds = datetime.now().strftime("%Y-%m-%d")
-    start, end = LoadTask.parse_day(ds, 3650)
+    start, _ = LoadTask.parse_day(ds)
+    _, end = LoadTask.parse_day(ds, 3650)
+
+    print(start, end)
     file_pro = DataFileProperty(exchange=binance(), path="tmp")
     file_pro.file_format = "%Y%m%d"
     file_pro.change_data_type("kline")
