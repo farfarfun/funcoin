@@ -10,7 +10,7 @@ from funcoin.task.load import LoadTask
 def download(args):
     ds = args.ds or datetime.now().strftime("%Y-%m-%d")
     start, end = LoadTask.parse_day(ds, 3650)
-    file_pro = DataFileProperty(exchange=binance(), path=".tmp")
+    file_pro = DataFileProperty(exchange=binance(), path="tmp")
     file_pro.file_format = "%Y%m%d"
     file_pro.change_data_type(args.type)
     file_pro.change_timeframe(args.timeframe)
@@ -38,7 +38,7 @@ def funcoin():
 
     download_parser.add_argument("-ds", default=None, help="the date")
     download_parser.add_argument("-days", default=7, type=int, help="the date")
-    download_parser.add_argument("--freq", nargs=2, metavar=("daily", "daily"), default="daily", help="")
+    download_parser.add_argument("--freq", nargs=2, metavar=("daily", "dailys"), default="daily", help="")
     download_parser.add_argument("--timeframe", nargs=2, metavar=("1m", "5m"), default="1m", help="")
     download_parser.set_defaults(func=download)  # 设置默认函数
 

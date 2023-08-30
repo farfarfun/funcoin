@@ -1,10 +1,23 @@
 # nohup /home/bingtao/opt/miniconda3/bin/python /home/bingtao/workspace/hubs/funcoin/example/example_v3.py  >>./logs/fundev/fundev-$(date +%Y-%m-%d).log 2>&1 &
-from datetime import datetime, timedelta
 
-from funcoin.task.load import LoadKlineDailyTask
 
-date = datetime.now()
-for i in range(1, 3650):
-    date += timedelta(days=-1)
-    ds = date.strftime("%Y-%m-%d")
-    LoadKlineDailyTask().refresh(ds=ds)
+from datetime import datetime
+
+from ccxt import binance
+
+from funcoin.coins.base.file import DataFileProperty
+from funcoin.task.load import LoadTask
+
+
+def download():
+    ds = datetime.now().strftime("%Y-%m-%d")
+    start, end = LoadTask.parse_day(ds, 3650)
+    file_pro = DataFileProperty(exchange=binance(), path="tmp")
+    file_pro.file_format = "%Y%m%d"
+    file_pro.change_data_type("kline")
+    file_pro.change_timeframe("1m")
+    file_pro.change_freq("daily")
+    file_pro.load_daily(start, end)
+
+
+download()
