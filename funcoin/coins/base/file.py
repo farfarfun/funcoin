@@ -69,7 +69,7 @@ class DataFileProperty:
         self,
         exchange,
         data_type="kline",
-        path="~/workspace/tmp",
+        path="tmp",
         start_date=datetime.today(),
         end_date=datetime.today(),
         freq="daily",
@@ -91,6 +91,8 @@ class DataFileProperty:
         )
         self.drive = LanzouDirectory(fid=6073401)
         self.download_days = download_days
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     def change_freq(self, freq):
         self.file_pro.freq = freq
