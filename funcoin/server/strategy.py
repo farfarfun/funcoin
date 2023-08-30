@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from funsecret import read_secret
-from darkbuild.tool.fastapi import add_api_routes, api_route
+from funbuild.tool.fastapi import add_api_routes, api_route
 from funcoin.strategy.binance import Strategy
 
 path_root = read_secret(cate1="funcoin", cate2="path", cate3="local", cate4="path_root") or "~/workspace/tmp"
