@@ -197,7 +197,7 @@ class DataFileProperty:
         [os.remove(csv) for csv in result]
         return True
 
-    def load_days(self, days=30):
+    def load_days(self):
         for i in range(1, 36500):
             start_time, end_time = parse_day(i)
             self.file_pro.start_date, self.file_pro.end_date = start_time, end_time
