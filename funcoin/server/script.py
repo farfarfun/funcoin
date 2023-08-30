@@ -13,7 +13,7 @@ def download(args):
     file_pro.change_data_type(args.type)
     file_pro.change_timeframe(args.timeframe)
     file_pro.change_freq(args.freq)
-    file_pro.load_days(30)
+    file_pro.load_days()
 
 
 def sync(args):
