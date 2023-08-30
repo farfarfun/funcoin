@@ -8,8 +8,6 @@ from funcoin.task.load import LoadTask
 
 
 def download(args):
-    ds = args.ds or datetime.now().strftime("%Y-%m-%d")
-    start, end = LoadTask.parse_day(ds, 3650)
     file_pro = DataFileProperty(exchange=binance(), path="tmp")
     file_pro.file_format = "%Y%m%d"
     file_pro.change_data_type(args.type)
