@@ -37,7 +37,7 @@ class LanzouDirectory(BaseTable):
         self._scan_all_file(self.fid, "funcoin")
 
     def _scan_all_file(self, fid, path):
-        for _dir in self.drive.get_dir_list(fid):
+        for _dir in self.drive.get_dir_list(fid)[0]:
             _path = f"{path}/{_dir.name}"
             if not self.file_exist(_path):
                 share = self.drive.get_share_info(fid=_dir.id, is_file=False)
