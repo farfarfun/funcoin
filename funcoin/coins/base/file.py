@@ -101,6 +101,7 @@ class DataFileProperty:
             os.makedirs(path)
         if not os.path.exists(f"{path}/funcoin"):
             os.makedirs(f"{path}/funcoin")
+        print("cwd : " + os.getcwd())
 
     def change_freq(self, freq):
         self.file_pro.freq = freq
