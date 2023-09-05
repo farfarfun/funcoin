@@ -1,5 +1,5 @@
-# nohup funcoin download  >>./logs/fundev/funcoin-$(date +%Y-%m-%d).log 2>&1 &
-
+# nohup funcoin download -days=3333  >>./logs/fundev/funcoin-$(date +%Y-%m-%d).log 2>&1 &
+# 19517
 
 from datetime import datetime
 
