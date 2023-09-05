@@ -115,7 +115,7 @@ class DataFileProperty:
     def sync(self, path):
         logger.info("sync file")
         self.drive.scan_all_file()
-        self.drive.sync(f"{path}/funcoin", remove_local=False)
+        self.drive.sync(f"{path}/funcoin", remove_local=True)
 
     def tar_exists(self):
         if self.drive.file_exist(self.file_pro.file_path_tar(absolute=False)):
