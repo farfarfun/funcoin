@@ -99,6 +99,8 @@ class DataFileProperty:
         self.download_days = download_days
         if not os.path.exists(path):
             os.makedirs(path)
+        if not os.path.exists(f"{path}/funcoin"):
+            os.makedirs(f"{path}/funcoin")
 
     def change_freq(self, freq):
         self.file_pro.freq = freq
