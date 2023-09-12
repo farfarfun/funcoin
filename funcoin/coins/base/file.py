@@ -201,7 +201,7 @@ class DataFileProperty:
         return True
 
     def load_days(self):
-        for i in range(1, 36500):
+        for i in range(1, 365):
             start_time, end_time = parse_day(i)
             self.file_pro.start_date, self.file_pro.end_date = start_time, end_time
             self._daily_load_and_save(self.file_pro)
