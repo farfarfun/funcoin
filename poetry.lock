@@ -12,18 +12,44 @@ files = [
 ]
 
 [[package]]
+name = "fundrive"
+version = "1.0.4"
+description = ""
+optional = false
+python-versions = "<4.0,>=3.8"
+files = [
+    {file = "fundrive-1.0.4-py3-none-any.whl", hash = "sha256:597804eddac54ddd6fdb973c07548372bedbb64bb8811b34334dbda09b36b45f"},
+    {file = "fundrive-1.0.4.tar.gz", hash = "sha256:d7eecfe2abf731b4cfce9080406243006d9e2e67be42b5d0369123a3f7cc7b27"},
+]
+
+[package.dependencies]
+funget = ">=1.0.4,<2.0.0"
+funsecret = ">=1.3.3,<2.0.0"
+
+[[package]]
 name = "funfile"
-version = "1.0.2"
+version = "1.0.3"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.7"
 files = [
-    {file = "funfile-1.0.2-py3-none-any.whl", hash = "sha256:b472a2648d7124360c1a7bf965c1ee991838a67a67c9622110bbdce0068c5d39"},
-    {file = "funfile-1.0.2.tar.gz", hash = "sha256:e6151494d0ea27cbb895dd543a44287e91e12cec042a6b137497b116a40439c8"},
+    {file = "funfile-1.0.3-py3-none-any.whl", hash = "sha256:99369ce05236ab81c2c48c1d2ad7df646c7aad6222c2a59f3249799e3f964a81"},
+    {file = "funfile-1.0.3.tar.gz", hash = "sha256:e54cb5dc26e5ad54f777119e2058317f3293b4f04fef4463ad3866e111d47452"},
 ]
 
 [package.dependencies]
 tqdm = ">=4.66.5,<5.0.0"
+
+[[package]]
+name = "funget"
+version = "1.0.4"
+description = ""
+optional = false
+python-versions = "<4.0,>=3.7"
+files = [
+    {file = "funget-1.0.4-py3-none-any.whl", hash = "sha256:73dd1b9aaa68ab0a0dea3a86b84c6d802215cfd94d82cae4be3e7c4e9c260daa"},
+    {file = "funget-1.0.4.tar.gz", hash = "sha256:0e71557528913eea5729558e19bab34b9e06497063089e33321f6edfcf4f1cd5"},
+]
 
 [[package]]
 name = "funsecret"
@@ -58,5 +84,5 @@ telegram = ["requests"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.7"
-content-hash = "5dabd25e968bafd04ab691f31c403829c26af968ddf1c17a3b4e7e4c7c649c8a"
+python-versions = "^3.8"
+content-hash = "4f94efb3dea1b608d60743fca42a62e0f65e062f8fcebd41d94db795e8048c3c"
