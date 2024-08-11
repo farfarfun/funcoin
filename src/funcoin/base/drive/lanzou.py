@@ -1,7 +1,7 @@
 import os
 
 from funcoin.base.db import BaseTable, Base
-from fundrive.lanzou import LanZouDrive
+from fundrive import LanZouDrive
 from sqlalchemy import BIGINT, String, select, UniqueConstraint, DateTime, func
 from sqlalchemy.orm import mapped_column
 from tqdm import tqdm
@@ -13,7 +13,9 @@ class FunCoinLanZou(Base):
 
     fid = mapped_column(BIGINT, comment="fid", primary_key=True)
     gmt_create = mapped_column(DateTime(timezone=True), server_default=func.now())
-    gmt_modified = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    gmt_modified = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
     isfile = mapped_column(BIGINT, comment="是否文件", default="1")
     name = mapped_column(String(100), comment="名称", default="")
     desc = mapped_column(String(500), comment="描述", default="0")
@@ -40,36 +42,38 @@ class LanzouDirectory(BaseTable):
         for _dir in self.drive.get_dir_list(fid):
             _path = f"{path}/{_dir['name']}"
             if not self.file_exist(_path):
-                share = self.drive.get_file_info(fid=_dir['fid'], is_file=False)
+                share = self.drive.get_file_info(fid=_dir["fid"], is_file=False)
                 data = {
-                    "fid": _dir['fid'],
-                    "name": _dir['name'],
+                    "fid": _dir["fid"],
+                    "name": _dir["name"],
                     "path": _path,
                     "isfile": 0,
-                    "desc": share['desc'],
-                    "url": share['url'],
-                    "pwd": share['pwd'],
+                    "desc": share["desc"],
+                    "url": share["url"],
+                    "pwd": share["pwd"],
                 }
                 self.upsert(values=data)
 
-            if _dir['name'].endswith(".tar"):
+            if _dir["name"].endswith(".tar"):
                 continue
-            self._scan_all_file(fid=_dir['fid'], path=_path)
+            self._scan_all_file(fid=_dir["fid"], path=_path)
 
-        for _file in tqdm(self.drive.get_file_list(fid), desc=f"fid={fid}-{os.path.basename(path)}"):
+        for _file in tqdm(
+            self.drive.get_file_list(fid), desc=f"fid={fid}-{os.path.basename(path)}"
+        ):
             _path = f"{path}/{_file['name']}"
 
             if not self.file_exist(_path):
-                share = self.drive.get_file_info(fid=_file['fid'], is_file=True)
+                share = self.drive.get_file_info(fid=_file["fid"], is_file=True)
                 data = {
-                    "fid": _file['fid'],
-                    "name": _file['name'],
+                    "fid": _file["fid"],
+                    "name": _file["name"],
                     "path": _path,
                     "isfile": 1,
-                    "downs": _file['downs'],
-                    "desc": share['desc'],
-                    "url": share['url'],
-                    "pwd": share['pwd'],
+                    "downs": _file["downs"],
+                    "desc": share["desc"],
+                    "url": share["url"],
+                    "pwd": share["pwd"],
                 }
                 self.upsert(values=data)
 
@@ -92,4 +96,6 @@ class LanzouDirectory(BaseTable):
         def filter_fun(x):
             return x.endswith(".csv") or x.startswith("_")
 
-        self.drive.upload_dir(path, self.fid, remove_local=remove_local, filter_fun=filter_fun)
+        self.drive.upload_dir(
+            path, self.fid, remove_local=remove_local, filter_fun=filter_fun
+        )
