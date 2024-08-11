@@ -13,13 +13,13 @@ files = [
 
 [[package]]
 name = "fundrive"
-version = "1.0.4"
+version = "1.0.8"
 description = ""
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "fundrive-1.0.4-py3-none-any.whl", hash = "sha256:597804eddac54ddd6fdb973c07548372bedbb64bb8811b34334dbda09b36b45f"},
-    {file = "fundrive-1.0.4.tar.gz", hash = "sha256:d7eecfe2abf731b4cfce9080406243006d9e2e67be42b5d0369123a3f7cc7b27"},
+    {file = "fundrive-1.0.8-py3-none-any.whl", hash = "sha256:1546bb7b4fc1595476b165572b431f19de73ad491a92efb61a295d4817b4141c"},
+    {file = "fundrive-1.0.8.tar.gz", hash = "sha256:fcd75fb2185995a38e7f85494a88005c1dbd71d8e05e075975cbad7b5495944b"},
 ]
 
 [package.dependencies]
@@ -28,13 +28,13 @@ funsecret = ">=1.3.3,<2.0.0"
 
 [[package]]
 name = "funfile"
-version = "1.0.3"
+version = "1.0.5"
 description = ""
 optional = false
-python-versions = "<4.0,>=3.7"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "funfile-1.0.3-py3-none-any.whl", hash = "sha256:99369ce05236ab81c2c48c1d2ad7df646c7aad6222c2a59f3249799e3f964a81"},
-    {file = "funfile-1.0.3.tar.gz", hash = "sha256:e54cb5dc26e5ad54f777119e2058317f3293b4f04fef4463ad3866e111d47452"},
+    {file = "funfile-1.0.5-py3-none-any.whl", hash = "sha256:5a11791728e045721cf5cd51de816bcd10160c1ecb9625f5386654117fad49b5"},
+    {file = "funfile-1.0.5.tar.gz", hash = "sha256:34e207af2164df5b77733d9220de9972e004d5393a943c174c44e7f86dff7366"},
 ]
 
 [package.dependencies]
@@ -42,14 +42,17 @@ tqdm = ">=4.66.5,<5.0.0"
 
 [[package]]
 name = "funget"
-version = "1.0.4"
+version = "1.0.7"
 description = ""
 optional = false
-python-versions = "<4.0,>=3.7"
+python-versions = "<4.0,>=3.8"
 files = [
-    {file = "funget-1.0.4-py3-none-any.whl", hash = "sha256:73dd1b9aaa68ab0a0dea3a86b84c6d802215cfd94d82cae4be3e7c4e9c260daa"},
-    {file = "funget-1.0.4.tar.gz", hash = "sha256:0e71557528913eea5729558e19bab34b9e06497063089e33321f6edfcf4f1cd5"},
+    {file = "funget-1.0.7-py3-none-any.whl", hash = "sha256:f4e4f0e5cd8dba7290ca0262d74350be79945704e7bb5237f9b01746679bcec8"},
+    {file = "funget-1.0.7.tar.gz", hash = "sha256:c6ff4afe777f24049b9a1cc988d1c055ada78da42b338436e8ffd32e6a4f4cb9"},
 ]
+
+[package.dependencies]
+funfile = ">=1.0.2,<2.0.0"
 
 [[package]]
 name = "funsecret"
