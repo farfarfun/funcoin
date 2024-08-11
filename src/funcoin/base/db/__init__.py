@@ -1,2 +1,2 @@
 from .base import BaseTable
-from funsecret.sqlalchemy import Base
+from fundb.sqlalchemy import Base
