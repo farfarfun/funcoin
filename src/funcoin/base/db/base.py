@@ -1,6 +1,6 @@
 from funsecret import read_secret
-from funsecret.sqlalchemy import BaseTable as BaseTable2
-from funsecret.sqlalchemy import create_engine
+from fundb.sqlalchemy import BaseTable as BaseTable2
+from fundb.sqlalchemy import create_engine
 
 
 class BaseTable(BaseTable2):
