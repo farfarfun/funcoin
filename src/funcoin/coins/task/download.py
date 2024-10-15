@@ -7,6 +7,7 @@ from funcoin.coins.table.load import LoadTask
 
 
 def download_daily(days=365, *arge, **kwargs):
+    days = int(days)
     exchange = ccxt.binance(  # noqa: F821
         {
             "apiKey": read_secret("coin", "binance", "api_key"),
