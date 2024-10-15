@@ -20,7 +20,7 @@ def funcoin():
 
     build_parser1 = subparsers.add_parser("download", help="download daily")
     build_parser1.add_argument("--days", default=365, help="days")
-    build_parser1.set_defaults(func=download_daily())
+    build_parser1.set_defaults(func=download_daily)
 
     args = parser.parse_args()
     params = vars(args)
