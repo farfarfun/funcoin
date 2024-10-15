@@ -62,7 +62,7 @@ class LoadTask:
     def download(self, loader: BaseLoader, file_pro: FileProperty) -> bool:
         logger.info(f"download for {file_pro.file_path_tar}")
         # 下载
-        # loader.load_symbols()
+        loader.load_symbols()
         # 压缩
         with tarfile.open(file_pro.file_path_tar, "w|xz") as tar:
             tar.add(file_pro.file_path_csv)
