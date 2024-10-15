@@ -16,8 +16,7 @@ class FunCoin(BaseServer):
 
 def funcoin():
     server = FunCoin()
-    parser = server_parser(server)
-    subparsers = parser.add_subparsers(help="sub-command help")
+    parser, subparsers = server_parser(server)
 
     build_parser1 = subparsers.add_parser("download", help="download daily")
     build_parser1.add_argument("--days", default=365, help="days")
