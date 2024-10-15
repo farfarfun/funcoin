@@ -3,12 +3,14 @@ import os
 from datetime import datetime, timedelta
 
 import ccxt
-from funcoin.coins.base.loader import KlineLoder, TradeLoader, BaseLoader
-from fundrive import LanZouDrive
+from fundrive import AlipanDrive
 from fundrive.core.table import DriveTable
 from funfile.compress import tarfile
 from funsecret import read_secret
 
+from funcoin.coins.base.loader import BaseLoader, KlineLoder, TradeLoader
+
+logging.getLogger("fundrive").setLevel(logging.INFO)
 logger = logging.getLogger("funcoin")
 logger.setLevel(logging.INFO)
 
@@ -39,7 +41,7 @@ class FileProperty:
 
     @property
     def filename_prefix(self):
-        return f"{self.exchange_name}_{self.data_type}_{self.freq}_{self.timeframe}-{self.partition}"
+        return f"{self.exchange_name}_{self.data_type}_{self.freq}_{self.timeframe}-{self.start_date.strftime(self.file_format)}"
 
     @property
     def file_path_csv(self):
@@ -62,11 +64,11 @@ class LoadTask:
     def download(self, loader: BaseLoader, file_pro: FileProperty) -> bool:
         logger.info(f"download for {file_pro.file_path_tar}")
         # 下载
-        loader.load_symbols()
+        # loader.load_symbols()
         # 压缩
         with tarfile.open(file_pro.file_path_tar, "w|xz") as tar:
             tar.add(file_pro.file_path_csv)
-        self.table.upload(file=file_pro.file_path_tar, partition=file_pro.partition)
+        self.table.upload(file=file_pro.file_path_tar, partition=file_pro.partition, overwrite=True)
 
         # 删除
         if os.path.exists(file_pro.file_path_csv):
@@ -94,27 +96,32 @@ class LoadTask:
         return self.download(loader, file_pro)
 
     def run(self, days=365):
+        self.table.update_partition_dict()
+        self.table.update_partition_meta()
+
         start_day = datetime.now() - timedelta(days=-1)
-        file_pro = FileProperty(exchange.name.lower()).daily(
-            start_day.strftime("%Y%m%d")
-        )
-        exists_data = self.table.partition_meta()
-        print(exists_data)
+        file_pro = FileProperty(exchange.name.lower()).daily(start_day.strftime("%Y%m%d"))
+        exists_data = dict([file["name"], file] for file in self.table.partition_meta())
+
         for i in range(days):
+            start_day += timedelta(days=-1)
             file_pro.daily(start_day.strftime("%Y%m%d"))
             if file_pro.file_path_tar in exists_data.keys():
+                logger.info(f"{file_pro.file_path_tar} exists, skip.")
                 continue
             self.download_kline(file_pro)
-            start_day += timedelta(days=-1)
 
 
-drive = LanZouDrive()
-drive.login()
 exchange = ccxt.binance(
     {
         "apiKey": read_secret("coin", "binance", "api_key"),
         "secret": read_secret("coin", "binance", "secret_key"),
     }
 )
-task = LoadTask(DriveTable("10677308", drive), exchange=exchange)
+
+# logging.basicConfig(level=logging.INFO)
+drive = AlipanDrive()
+drive.login()
+table = DriveTable(table_fid="66bf1a293f124e5a2d2841eeb0fbb21b70ddb0ee", drive=drive)
+task = LoadTask(table=table, exchange=exchange)
 task.run()

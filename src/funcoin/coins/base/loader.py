@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import time
 
 import ccxt
 import pandas as pd
@@ -13,13 +14,15 @@ one_hour = 3600 * 1000
 
 
 class BaseLoader:
-    def __init__(self, csv_path, unix_start, unix_end, *args, **kwargs):
-        self.csv_path = csv_path
+    def __init__(self, unix_start, unix_end, *args, **kwargs):
         self.unix_start = unix_start
         self.unix_end = unix_end
         self.cache_data = []
 
     def _open(self, *args, **kwargs):
+        pass
+
+    def _write(self, data_list):
         pass
 
     def _close(self, *args, **kwargs):
@@ -37,7 +40,9 @@ class BaseLoader:
         self._close(*args, **kwargs)
 
     def load_symbol(self, symbol, pbr=None, *args, **kwargs):
-        return self._load_symbol(symbol=symbol, pbr=pbr, *args, **kwargs)
+        self._open(*args, **kwargs)
+        self._load_symbol(symbol=symbol, pbr=pbr, *args, **kwargs)
+        self._close(*args, **kwargs)
 
     def write_data(self, data_list, cache=True):
         self.cache_data.extend(data_list)
@@ -46,45 +51,51 @@ class BaseLoader:
         if len(self.cache_data) == 0:
             return
         df = pd.DataFrame(self.cache_data)
-        df = df[
-            (df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)
-        ]
+        df = df[(df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)]
         self._write(json.loads(df.to_json(orient="records")))
         self.cache_data.clear()
 
-    def _write(self, data_list):
-        pass
+    def __enter__(self):
+        self._handle = self
+        self._open()
+        return self._handle
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.cache_data is not None:
+            self.write_data([], cache=False)
+        self._close()
+        return True
 
 
-class CCXTBaseLoader(BaseLoader):
-    def __init__(self, exchange: Exchange, fieldnames, *args, **kwargs):
-        self.exchange = exchange
+class CSVLoader(BaseLoader):
+    def __init__(self, csv_path, fieldnames, *args, **kwargs):
+        self.csv_path = csv_path
         super().__init__(*args, **kwargs)
         self.csv_file = open(self.csv_path, mode="w")
-        self.csv_writer = csv.DictWriter(
-            self.csv_file, delimiter=",", fieldnames=fieldnames
-        )
+        self.csv_writer = csv.DictWriter(self.csv_file, delimiter=",", fieldnames=fieldnames)
         self.csv_writer.writeheader()
 
     def _write(self, data_list):
         self.csv_writer.writerows(data_list)
         self.csv_file.flush()
 
-    def _load_symbols(self, *args, **kwargs):
+    def _close(self, *args, **kwargs):
+        self.csv_file.close()
+
+
+class CCXTBaseLoader(CSVLoader):
+    def __init__(self, exchange: Exchange, *args, **kwargs):
+        self.exchange = exchange
+        super().__init__(*args, **kwargs)
         self.exchange.load_markets()
+
+    def _load_symbols(self, *args, **kwargs):
         pbr = tqdm(self.exchange.symbols)
         for sym in pbr:
             if ":" not in sym:
                 pbr.set_description(sym)
-                self.load_symbol(sym, pbr, *args, **kwargs)
+                self._load_symbol(sym, pbr, *args, **kwargs)
         self.write_data([], False)
-
-    def load_symbol(self, symbol, pbr=None, *args, **kwargs):
-        self._open(*args, **kwargs)
-        self.exchange.load_markets()
-        self.load_symbol(symbol, pbr=pbr, *args, **kwargs)
-        self.write_data([], False)
-        self._write(*args, **kwargs)
 
 
 class KlineLoder(CCXTBaseLoader):
@@ -102,19 +113,15 @@ class KlineLoder(CCXTBaseLoader):
             if unix_temp >= self.unix_end:
                 break
             try:
-                result = self.exchange.fetch_ohlcv(
-                    symbol, self.timeframe, unix_temp, limit=100
-                )
+                result = self.exchange.fetch_ohlcv(symbol, self.timeframe, unix_temp, limit=100)
                 result = self.exchange.sort_by(result, 0)
                 if len(result) == 0:
                     break
                 unix_temp = result[-1][0]
-                df = pd.DataFrame(
-                    result, columns=["timestamp", "open", "close", "low", "high", "vol"]
-                )
+                df = pd.DataFrame(result, columns=["timestamp", "open", "close", "low", "high", "vol"])
                 df["symbol"] = symbol
                 self.write_data(json.loads(df.to_json(orient="records")))
-                # time.sleep(int(self.exchange.rateLimit / 1000))
+                time.sleep(int(self.exchange.rateLimit / 1000))
             except Exception as e:
                 print(type(e).__name__, str(e))
                 self.exchange.sleep(10000)
@@ -160,7 +167,7 @@ class TradeLoader(CCXTBaseLoader):
                 ]
 
                 self.write_data(result)
-                # time.sleep(int(self.exchange.rateLimit / 1000))
+                time.sleep(int(self.exchange.rateLimit / 1000))
             except ccxt.NetworkError as e:
                 print(type(e).__name__, str(e))
                 self.exchange.sleep(1000)

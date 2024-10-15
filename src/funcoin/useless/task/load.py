@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 
 from ccxt import binance
+from funsecret import read_secret
+
 from funcoin.coins.base.file import DataFileProperty
 from funcoin.task import BaseTask
-from funsecret import read_secret
+
 
 class LoadTask(BaseTask):
     table_name = "load"
