@@ -1,0 +1,24 @@
+[build-system]
+requires = [ "poetry-core",]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "funcoin"
+version = "1.0.13"
+description = ""
+authors = [ "farfun <1007530194@qq.com>",]
+readme = "README.md"
+[[tool.poetry.packages]]
+from = "src"
+include = "*"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+funsecret = "^1.3.2"
+funfile = "^1.0.5"
+fundrive = "^1.0.8"
+ccxt = "^4.3.79"
+farfundb = "^1.2.3"
+
+[tool.poetry.scripts]
+funcoin = "funcoin.server.script:funcoin"
