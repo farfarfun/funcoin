@@ -507,7 +507,7 @@ wheels = [
 
 [[package]]
 name = "funcoin"
-version = "1.0.17"
+version = "1.0.18"
 source = { virtual = "." }
 dependencies = [
     { name = "ccxt" },
