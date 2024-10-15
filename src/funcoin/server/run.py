@@ -2,8 +2,6 @@ from funbuild.shell import run_shell_list
 from funcoin.coins.task.download import download_daily
 from funserver.base import BaseServer, server_parser
 
-download_daily()
-
 
 class FunCoin(BaseServer):
     def __init__(self):
