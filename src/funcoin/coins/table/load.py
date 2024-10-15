@@ -71,6 +71,8 @@ class LoadTask:
         # 删除
         if os.path.exists(file_pro.file_path_csv):
             os.remove(file_pro.file_path_csv)
+        if os.path.exists(file_pro.file_path_tar):
+            os.remove(file_pro.file_path_tar)
         return True
 
     def download_kline(self, file_pro: FileProperty) -> bool:
