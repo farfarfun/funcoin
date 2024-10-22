@@ -1,0 +1,14 @@
+[project]
+name = "funcoin"
+version = "1.0.31"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [ "ccxt>=4.4.18", "farfundb>=1.2.3", "fundrive>=1.0.57", "funfile>=1.0.6", "funsecret>=1.4.2",]
+[[project.authors]]
+name = "farfun"
+email = "farfarfun@qq.com"
+
+[project.scripts]
+funcoin = "funcoin.server.run:funcoin"
+funcoin-download = "funcoin.server.download:funcoin_download"
