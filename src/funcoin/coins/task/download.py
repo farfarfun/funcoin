@@ -23,4 +23,4 @@ def download_daily(days=365, *arge, **kwargs):
     task.run(days=days)
 
 
-download_daily(days=3)
+# download_daily(days=3)
