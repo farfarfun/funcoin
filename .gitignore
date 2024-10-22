@@ -115,3 +115,4 @@ dmypy.json
 .pyre/
 */__pycache__/*
 *.tar
+%.csv
