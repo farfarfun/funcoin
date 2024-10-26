@@ -1,5 +1,5 @@
 import ccxt
-from fundrive import AlipanDrive
+from fundrive import OSSDrive
 from fundrive.core.table import DriveTable
 from funsecret import read_secret
 
@@ -15,9 +15,16 @@ def download_daily(days=365, *arge, **kwargs):
         }
     )
 
-    drive = AlipanDrive()
-    drive.login()
-    table = DriveTable(table_fid="66bf1a293f124e5a2d2841eeb0fbb21b70ddb0ee", drive=drive)
+    drive = OSSDrive()
+
+    drive.login(
+        access_key=read_secret("fundrive", "oss", "farfarfun", "access_key"),
+        access_secret=read_secret("fundrive", "oss", "farfarfun", "access_secret"),
+        endpoint=read_secret("fundrive", "oss", "farfarfun", "endpoint"),
+        bucket_name="farfarfun",
+    )
+
+    table = DriveTable(table_fid="funcoin/binance_kline_daily_1m/", drive=drive)
     table.update_partition_meta()
     task = LoadTask(table=table, exchange=exchange)
     task.run(days=days)
