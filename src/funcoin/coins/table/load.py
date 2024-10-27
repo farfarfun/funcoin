@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timedelta
 
 import ccxt
-from fundrive.core.table import DriveTable
+from funtable import DriveTable
 from funfile.compress import tarfile
 
 from funcoin.coins.base.loader import BaseLoader, KlineLoder, TradeLoader
