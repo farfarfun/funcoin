@@ -6,7 +6,7 @@ from funtable import DriveTable
 from funcoin.coins.table.load import LoadTask
 
 
-def download_daily(days=365, *arge, **kwargs):
+def download_daily(days=1000, *arge, **kwargs):
     days = int(days)
     exchange = ccxt.binance(  # noqa: F821
         {
