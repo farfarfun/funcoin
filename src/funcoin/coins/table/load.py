@@ -3,14 +3,13 @@ import os
 from datetime import datetime, timedelta
 
 import ccxt
-from funtable import DriveTable
+import funutil
 from funfile.compress import tarfile
+from funtable import DriveTable
 
 from funcoin.coins.base.loader import BaseLoader, KlineLoder, TradeLoader
 
-logging.getLogger("fundrive").setLevel(logging.INFO)
-logger = logging.getLogger("funcoin")
-logger.setLevel(logging.INFO)
+logger = funutil.getLogger("funcoin")
 
 
 class FileProperty:

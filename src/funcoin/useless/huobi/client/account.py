@@ -1,5 +1,5 @@
 import asyncio
-import json
+import orjson
 
 import aiohttp
 from funcoin.huobi.connection import (RestApiSyncClient, SubscribeClient,
@@ -205,7 +205,7 @@ class AccountClient(object):
                 channel["ch"] = "accounts.update"
             else:
                 channel["ch"] = "accounts.update#{mode}".format(mode=_mode)
-            return json.dumps(channel)
+            return orjson.dumps(channel)
 
         def subscription(connection):
             connection.send(accounts_update_channel(mode))
@@ -235,7 +235,7 @@ class AccountClient(object):
             channel["op"] = "req"
             channel["topic"] = "accounts.list"
             channel["cid"] = str(_client_req_id) if _client_req_id else str(get_current_timestamp())
-            return json.dumps(channel)
+            return orjson.dumps(channel)
 
         def subscription(connection):
             connection.send(request_account_list_channel(client_req_id))

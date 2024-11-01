@@ -1,5 +1,5 @@
 import csv
-import json
+import orjson
 import logging
 
 import ccxt
@@ -51,7 +51,7 @@ class BaseLoader:
             return
         df = pd.DataFrame(self.cache_data)
         df = df[(df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)]
-        self._write(json.loads(df.to_json(orient="records")))
+        self._write(orjson.loads(df.to_json(orient="records")))
         self.cache_data.clear()
 
     def __enter__(self):
@@ -119,7 +119,7 @@ class KlineLoder(CCXTBaseLoader):
                 unix_temp = result[-1][0]
                 df = pd.DataFrame(result, columns=["timestamp", "open", "close", "low", "high", "vol"])
                 df["symbol"] = symbol
-                self.write_data(json.loads(df.to_json(orient="records")))
+                self.write_data(orjson.loads(df.to_json(orient="records")))
                 # time.sleep(int(self.exchange.rateLimit / 1000))
             except Exception as e:
                 logger.error(e)
