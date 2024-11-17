@@ -1,10 +1,12 @@
-from funcoin.huobi.connection import (RestApiSyncClient, SubscribeClient,
-                                       WebSocketReqClient)
+from funcoin.huobi.connection import (
+    RestApiSyncClient,
+    SubscribeClient,
+    WebSocketReqClient,
+)
 from funcoin.huobi.constant import HttpMethod
 
 
 class GenericClient(object):
-
     def __init__(self, *args, **kwargs):
         """
         Create the request client instance.
@@ -30,7 +32,9 @@ class GenericClient(object):
         channel = "/v1/common/timestamp"
         params = {}
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET, channel, params
+        )
 
     def get_exchange_currencies(self):
         """
@@ -42,7 +46,9 @@ class GenericClient(object):
         channel = "/v1/common/currencys"
         params = {}
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET, channel, params
+        )
 
     def get_exchange_symbols(self):
         """
@@ -54,7 +60,9 @@ class GenericClient(object):
         channel = "/v1/common/symbols"
         params = {}
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET, channel, params
+        )
 
     def get_exchange_info(self):
         """
@@ -66,11 +74,13 @@ class GenericClient(object):
 
         ret = {
             "symbol_list": self.get_exchange_symbols(),
-            "currencies": self.get_exchange_currencies()
+            "currencies": self.get_exchange_currencies(),
         }
         return ret
 
-    def get_reference_currencies(self, currency: 'str' = None, is_authorized_user: 'bool' = None) -> list:
+    def get_reference_currencies(
+        self, currency: "str" = None, is_authorized_user: "bool" = None
+    ) -> list:
         """
         Get all the trading assets and currencies supported in huobi.
         The information of trading instrument, including base currency, quote precision, etc.
@@ -80,12 +90,11 @@ class GenericClient(object):
         :return: The information of trading instrument and currencies.
         """
         channel = "/v2/reference/currencies"
-        params = {
-            "currency": currency,
-            "authorizedUser": is_authorized_user
-        }
+        params = {"currency": currency, "authorizedUser": is_authorized_user}
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET, channel, params
+        )
 
     def get_system_status(self) -> str:
         """

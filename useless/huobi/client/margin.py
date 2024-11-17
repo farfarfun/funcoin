@@ -2,7 +2,6 @@ from funcoin.huobi.utils.input_checker import *
 
 
 class MarginClient(object):
-
     def __init__(self, **kwargs):
         """
         Create the request client instance.
@@ -14,7 +13,9 @@ class MarginClient(object):
         """
         self.__kwargs = kwargs
 
-    def post_transfer_in_margin(self, symbol: 'str', currency: 'str', amount: 'float') -> int:
+    def post_transfer_in_margin(
+        self, symbol: "str", currency: "str", amount: "float"
+    ) -> int:
         """
         Transfer asset from spot account to margin account.
 
@@ -27,16 +28,17 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "symbol": symbol,
-            "currency": currency,
-            "amount": amount
-        }
+        params = {"symbol": symbol, "currency": currency, "amount": amount}
 
-        from huobi.service.margin.post_transfer_in_margin import PostTransferInMarginService
+        from huobi.service.margin.post_transfer_in_margin import (
+            PostTransferInMarginService,
+        )
+
         return PostTransferInMarginService(params).request(**self.__kwargs)
 
-    def post_transfer_out_margin(self, symbol: 'str', currency: 'str', amount: 'float') -> int:
+    def post_transfer_out_margin(
+        self, symbol: "str", currency: "str", amount: "float"
+    ) -> int:
         """
         Transfer asset from margin account to spot account.
 
@@ -49,16 +51,15 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "symbol": symbol,
-            "currency": currency,
-            "amount": amount
-        }
+        params = {"symbol": symbol, "currency": currency, "amount": amount}
 
-        from huobi.service.margin.post_transfer_out_margin import PostTransferOutMarginService
+        from huobi.service.margin.post_transfer_out_margin import (
+            PostTransferOutMarginService,
+        )
+
         return PostTransferOutMarginService(params).request(**self.__kwargs)
 
-    def get_margin_account_balance(self, symbol: 'str') -> list:
+    def get_margin_account_balance(self, symbol: "str") -> list:
         """
         Get the Balance of the Margin Loan Account.
 
@@ -67,14 +68,17 @@ class MarginClient(object):
         """
         check_symbol(symbol)
 
-        params = {
-            "symbol": symbol
-        }
+        params = {"symbol": symbol}
 
-        from huobi.service.margin.get_margin_account_balance import GetMarginAccountBalanceService
+        from huobi.service.margin.get_margin_account_balance import (
+            GetMarginAccountBalanceService,
+        )
+
         return GetMarginAccountBalanceService(params).request(**self.__kwargs)
 
-    def post_create_margin_order(self, symbol: 'str', currency: 'str', amount: 'float') -> int:
+    def post_create_margin_order(
+        self, symbol: "str", currency: "str", amount: "float"
+    ) -> int:
         """
         Submit a request to borrow with margin account.
 
@@ -87,16 +91,15 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "symbol": symbol,
-            "currency": currency,
-            "amount": amount
-        }
+        params = {"symbol": symbol, "currency": currency, "amount": amount}
 
-        from huobi.service.margin.post_create_margin_order import PostCreateMarginOrderService
+        from huobi.service.margin.post_create_margin_order import (
+            PostCreateMarginOrderService,
+        )
+
         return PostCreateMarginOrderService(params).request(**self.__kwargs)
 
-    def post_repay_margin_order(self, loan_id: 'int', amount: 'float') -> int:
+    def post_repay_margin_order(self, loan_id: "int", amount: "float") -> int:
         """
         Get the margin loan records.
 
@@ -107,17 +110,24 @@ class MarginClient(object):
         check_should_not_none(loan_id, "loan_id")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "loan_id": loan_id,
-            "amount": amount
-        }
+        params = {"loan_id": loan_id, "amount": amount}
 
-        from huobi.service.margin.post_repay_margin_order import PostRepayMarginOrderService
+        from huobi.service.margin.post_repay_margin_order import (
+            PostRepayMarginOrderService,
+        )
+
         return PostRepayMarginOrderService(params).request(**self.__kwargs)
 
-    def get_margin_loan_orders(self, symbol: 'str', start_date: 'str' = None, end_date: 'str' = None,
-                               states: 'LoanOrderState' = None, from_id: 'int' = None,
-                               size: 'int' = None, direction: 'QueryDirection' = None) -> list:
+    def get_margin_loan_orders(
+        self,
+        symbol: "str",
+        start_date: "str" = None,
+        end_date: "str" = None,
+        states: "LoanOrderState" = None,
+        from_id: "int" = None,
+        size: "int" = None,
+        direction: "QueryDirection" = None,
+    ) -> list:
         """
         Get the margin loan records.
 
@@ -142,13 +152,16 @@ class MarginClient(object):
             "states": states,
             "from": from_id,
             "size": size,
-            "direct": direction
+            "direct": direction,
         }
 
-        from huobi.service.margin.get_margin_loan_orders import GetMarginLoanOrdersService
+        from huobi.service.margin.get_margin_loan_orders import (
+            GetMarginLoanOrdersService,
+        )
+
         return GetMarginLoanOrdersService(params).request(**self.__kwargs)
 
-    def get_margin_loan_info(self, symbols: 'str' = None) -> list:
+    def get_margin_loan_info(self, symbols: "str" = None) -> list:
         """
         The request of get margin loan info, can return currency loan info list.
 
@@ -157,11 +170,10 @@ class MarginClient(object):
         """
 
         check_symbol(symbols)
-        params = {
-            "symbols": symbols
-        }
+        params = {"symbols": symbols}
 
         from huobi.service.margin.get_margin_loan_info import GetMarginLoanInfoService
+
         return GetMarginLoanInfoService(params).request(**self.__kwargs)
 
     def get_cross_margin_loan_info(self) -> list:
@@ -172,10 +184,13 @@ class MarginClient(object):
         """
         params = {}
 
-        from huobi.service.margin.get_cross_margin_loan_info import GetCrossMarginLoanInfoService
+        from huobi.service.margin.get_cross_margin_loan_info import (
+            GetCrossMarginLoanInfoService,
+        )
+
         return GetCrossMarginLoanInfoService(params).request(**self.__kwargs)
 
-    def post_cross_margin_transfer_in(self, currency: 'str', amount: 'float') -> int:
+    def post_cross_margin_transfer_in(self, currency: "str", amount: "float") -> int:
         """
         transfer currency to cross account.
 
@@ -186,15 +201,15 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "amount": amount,
-            "currency": currency
-        }
+        params = {"amount": amount, "currency": currency}
 
-        from huobi.service.margin.post_cross_margin_transfer_in import PostCrossMarginTransferInService
+        from huobi.service.margin.post_cross_margin_transfer_in import (
+            PostCrossMarginTransferInService,
+        )
+
         return PostCrossMarginTransferInService(params).request(**self.__kwargs)
 
-    def post_cross_margin_transfer_out(self, currency: 'str', amount: 'float') -> int:
+    def post_cross_margin_transfer_out(self, currency: "str", amount: "float") -> int:
         """
         transfer currency to cross account.
 
@@ -205,15 +220,17 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "amount": amount,
-            "currency": currency
-        }
+        params = {"amount": amount, "currency": currency}
 
-        from huobi.service.margin.post_cross_margin_transfer_out import PostCrossMarginTransferOutService
+        from huobi.service.margin.post_cross_margin_transfer_out import (
+            PostCrossMarginTransferOutService,
+        )
+
         return PostCrossMarginTransferOutService(params).request(**self.__kwargs)
 
-    def post_cross_margin_create_loan_orders(self, currency: 'str', amount: 'float') -> int:
+    def post_cross_margin_create_loan_orders(
+        self, currency: "str", amount: "float"
+    ) -> int:
         """
         create cross margin loan orders
 
@@ -225,15 +242,15 @@ class MarginClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "amount": amount,
-            "currency": currency
-        }
+        params = {"amount": amount, "currency": currency}
 
-        from huobi.service.margin.post_cross_margin_create_loan_orders import PostCrossMarginCreateLoanOrdersService
+        from huobi.service.margin.post_cross_margin_create_loan_orders import (
+            PostCrossMarginCreateLoanOrdersService,
+        )
+
         return PostCrossMarginCreateLoanOrdersService(params).request(**self.__kwargs)
 
-    def post_cross_margin_loan_order_repay(self, order_id: 'str', amount: 'float'):
+    def post_cross_margin_loan_order_repay(self, order_id: "str", amount: "float"):
         """
         repay cross margin loan orders
 
@@ -245,18 +262,25 @@ class MarginClient(object):
         check_should_not_none(order_id, "order-id")
         check_should_not_none(amount, "amount")
 
-        params = {
-            "amount": amount,
-            "order-id": order_id
-        }
+        params = {"amount": amount, "order-id": order_id}
 
-        from huobi.service.margin.post_cross_margin_loan_order_repay import PostCrossMarginLoanOrderRepayService
+        from huobi.service.margin.post_cross_margin_loan_order_repay import (
+            PostCrossMarginLoanOrderRepayService,
+        )
+
         return PostCrossMarginLoanOrderRepayService(params).request(**self.__kwargs)
 
-    def get_cross_margin_loan_orders(self, currency: 'str' = None, state: 'str' = None,
-                                     start_date: 'str' = None, end_date: 'str' = None,
-                                     from_id: 'int' = None, size: 'int' = None, direct: 'str' = None,
-                                     sub_uid: 'int' = None) -> list:
+    def get_cross_margin_loan_orders(
+        self,
+        currency: "str" = None,
+        state: "str" = None,
+        start_date: "str" = None,
+        end_date: "str" = None,
+        from_id: "int" = None,
+        size: "int" = None,
+        direct: "str" = None,
+        sub_uid: "int" = None,
+    ) -> list:
         """
         get cross margin loan orders
 
@@ -270,27 +294,36 @@ class MarginClient(object):
             "from": from_id,
             "size": size,
             "direct": direct,
-            "sub-uid": sub_uid
+            "sub-uid": sub_uid,
         }
 
-        from huobi.service.margin.get_cross_margin_loan_orders import GetCrossMarginLoanOrdersService
+        from huobi.service.margin.get_cross_margin_loan_orders import (
+            GetCrossMarginLoanOrdersService,
+        )
+
         return GetCrossMarginLoanOrdersService(params).request(**self.__kwargs)
 
-    def get_cross_margin_account_balance(self, sub_uid: 'int' = None):
+    def get_cross_margin_account_balance(self, sub_uid: "int" = None):
         """
         get cross margin account balance
 
         :return: cross-margin account.
         """
-        params = {
-            "sub-uid": sub_uid
-        }
+        params = {"sub-uid": sub_uid}
 
-        from huobi.service.margin.get_cross_margin_account_balance import GetCrossMarginAccountBalanceService
+        from huobi.service.margin.get_cross_margin_account_balance import (
+            GetCrossMarginAccountBalanceService,
+        )
+
         return GetCrossMarginAccountBalanceService(params).request(**self.__kwargs)
 
-    def post_general_repay_loan(self, account_id: 'str', currency: 'str', amount: 'float',
-                                transact_id: 'str' = None) -> list:
+    def post_general_repay_loan(
+        self,
+        account_id: "str",
+        currency: "str",
+        amount: "float",
+        transact_id: "str" = None,
+    ) -> list:
         """
         Repay Margin Loan（Cross）.
 
@@ -307,57 +340,68 @@ class MarginClient(object):
             "accountId": account_id,
             "currency": currency,
             "amount": amount,
-            "transact_id": transact_id
+            "transact_id": transact_id,
         }
 
-        from huobi.service.margin.post_general_repay_loan import PostGeneralRepayLoanService
+        from huobi.service.margin.post_general_repay_loan import (
+            PostGeneralRepayLoanService,
+        )
+
         return PostGeneralRepayLoanService(params).request(**self.__kwargs)
 
-    def get_general_repayment_loan_records(self, repay_id: 'str' = None, account_id: 'str' = None,
-                                           currency: 'str' = None, start_time: 'int' = None, end_time: 'int' = None,
-                                           sort: 'str' = None, limit: 'int' = None, from_id: 'int' = None) -> list:
-
+    def get_general_repayment_loan_records(
+        self,
+        repay_id: "str" = None,
+        account_id: "str" = None,
+        currency: "str" = None,
+        start_time: "int" = None,
+        end_time: "int" = None,
+        sort: "str" = None,
+        limit: "int" = None,
+        from_id: "int" = None,
+    ) -> list:
         """
-         Get Repayment Record Reference（Cross）.
+        Get Repayment Record Reference（Cross）.
 
-         :param repay_id: repayment transaction ID. (optional)
-         :param account_id: account ID (default value: all accounts) (optional).
-         :param currency: borrowing/lending currency (default value: all currencies). (optional)
-         :param start_time: start time (unix time in millisecond; range: [(endTime – x D), endTime]; default value: (endTime – x D) (optional)
-         :param end_time: end time (unix time in millisecond；range: [(present time – y D), present time]; default value: present time) (optional)
-         :param sort: sort direction (virtual value: asc, desc; default value: desc) (optional)
-         :param limit: max return items per page (range: [1,100]; default value: 50) (optional)
-         :param from_id: search original ID (only available when searching for the next page) (optional)
-         """
+        :param repay_id: repayment transaction ID. (optional)
+        :param account_id: account ID (default value: all accounts) (optional).
+        :param currency: borrowing/lending currency (default value: all currencies). (optional)
+        :param start_time: start time (unix time in millisecond; range: [(endTime – x D), endTime]; default value: (endTime – x D) (optional)
+        :param end_time: end time (unix time in millisecond；range: [(present time – y D), present time]; default value: present time) (optional)
+        :param sort: sort direction (virtual value: asc, desc; default value: desc) (optional)
+        :param limit: max return items per page (range: [1,100]; default value: 50) (optional)
+        :param from_id: search original ID (only available when searching for the next page) (optional)
+        """
 
-        params = {
-
-        }
+        params = {}
         if repay_id is not None:
-            params['repayId'] = repay_id
+            params["repayId"] = repay_id
 
         if account_id is not None:
-            params['accountId'] = account_id
+            params["accountId"] = account_id
 
         if account_id is not None:
-            params['currency'] = currency
+            params["currency"] = currency
 
         if start_time is not None:
-            params['startTime'] = start_time
+            params["startTime"] = start_time
 
         if end_time is not None:
-            params['endTime'] = end_time
+            params["endTime"] = end_time
 
         if sort is not None:
-            params['sort'] = sort
+            params["sort"] = sort
 
         if limit is not None:
-            params['limit'] = limit
+            params["limit"] = limit
 
         if from_id is not None:
-            params['fromId'] = from_id
+            params["fromId"] = from_id
 
-        from huobi.service.margin.get_general_repayment_loan_records import GetGeneralRepaymentLoanRecordsService
+        from huobi.service.margin.get_general_repayment_loan_records import (
+            GetGeneralRepaymentLoanRecordsService,
+        )
+
         return GetGeneralRepaymentLoanRecordsService(params).request(**self.__kwargs)
 
         return

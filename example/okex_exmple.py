@@ -12,9 +12,9 @@ class CoinList:
     def load(self):
         data = account_api.get_account().data[0]
 
-        for detail in data['details']:
-            if detail['ccy'] == 'USDT':
-                self.usdt = detail['availBal']
+        for detail in data["details"]:
+            if detail["ccy"] == "USDT":
+                self.usdt = detail["availBal"]
                 continue
             coin = OkexCoin.instance_by_account(detail)
             if coin.money > 1:

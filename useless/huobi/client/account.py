@@ -1,20 +1,29 @@
 import asyncio
-import orjson
 
 import aiohttp
-from funcoin.huobi.connection import (RestApiSyncClient, SubscribeClient,
-                                       WebSocketReqClient)
-from funcoin.huobi.constant import (AccountBalanceMode, AccountType,
-                                     HttpMethod, TransferFuturesPro,
-                                     TransferMasterType,
-                                     get_default_server_url)
+import orjson
+from funcoin.huobi.connection import (
+    RestApiSyncClient,
+    SubscribeClient,
+    WebSocketReqClient,
+)
+from funcoin.huobi.constant import (
+    AccountBalanceMode,
+    AccountType,
+    HttpMethod,
+    TransferFuturesPro,
+    TransferMasterType,
+    get_default_server_url,
+)
 from funcoin.huobi.utils import get_current_timestamp
-from funcoin.huobi.utils.input_checker import (check_currency, check_in_list,
-                                                check_should_not_none)
+from funcoin.huobi.utils.input_checker import (
+    check_currency,
+    check_in_list,
+    check_should_not_none,
+)
 
 
 class AccountClient(object):
-
     def __init__(self, *args, **kwargs):
         """
         Create the request client instance.
@@ -35,7 +44,9 @@ class AccountClient(object):
         :return: The list of accounts data.
         """
         channel = "/v1/account/accounts"
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, {})
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, {}
+        )
 
     def get_balance(self, account_id: int):
         """
@@ -43,15 +54,15 @@ class AccountClient(object):
         :return: The list of accounts data.
         """
         check_should_not_none(account_id, "account-id")
-        params = {
-            "account-id": account_id
-        }
+        params = {"account-id": account_id}
 
         def get_channel():
             path = "/v1/account/accounts/{}/balance"
             return path.format(account_id)
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, get_channel(), params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, get_channel(), params
+        )
 
     def get_account_by_type_and_symbol(self, account_type, symbol):
         accounts = self.get_accounts()
@@ -98,11 +109,18 @@ class AccountClient(object):
                 path = "/v1/account/accounts/{}/balance"
                 return path.format(account_item.id)
 
-            balance_request = self.rest_api_sync_client.create_request(HttpMethod.GET_SIGN, get_channel(), params)
+            balance_request = self.rest_api_sync_client.create_request(
+                HttpMethod.GET_SIGN, get_channel(), params
+            )
 
             balance_url = server_url + balance_request.url
-            tasks.append(asyncio.ensure_future(
-                self.async_get_account_balance(balance_url, account_item.id, account_balance_json_map)))
+            tasks.append(
+                asyncio.ensure_future(
+                    self.async_get_account_balance(
+                        balance_url, account_item.id, account_balance_json_map
+                    )
+                )
+            )
 
         loop = asyncio.get_event_loop()
         try:
@@ -128,15 +146,15 @@ class AccountClient(object):
         :return: the balance of a sub-account specified by sub-account uid.
         """
         check_should_not_none(sub_uid, "sub-uid")
-        params = {
-            "sub-uid": sub_uid
-        }
+        params = {"sub-uid": sub_uid}
 
         def get_channel():
             path = "/v1/account/accounts/{}"
             return path.format(sub_uid)
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, get_channel(), params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, get_channel(), params
+        )
 
     def get_aggregated_subuser_balance(self):
         """
@@ -146,10 +164,17 @@ class AccountClient(object):
         """
         params = {}
         channel = "/v1/subuser/aggregate-balance"
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, params
+        )
 
-    def transfer_between_parent_and_subuser(self, sub_uid: int, currency: str, amount: float,
-                                            transfer_type: TransferMasterType):
+    def transfer_between_parent_and_subuser(
+        self,
+        sub_uid: int,
+        currency: str,
+        amount: float,
+        transfer_type: TransferMasterType,
+    ):
         """
         Transfer Asset between Parent and Sub Account.
 
@@ -168,13 +193,17 @@ class AccountClient(object):
             "sub-uid": sub_uid,
             "currency": currency,
             "amount": amount,
-            "type": transfer_type
+            "type": transfer_type,
         }
         channel = "/v1/subuser/transfer"
 
-        return self.rest_api_sync_client.request_process(HttpMethod.POST_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.POST_SIGN, channel, params
+        )
 
-    def sub_account_update(self, mode: AccountBalanceMode, callback, error_handler=None):
+    def sub_account_update(
+        self, mode: AccountBalanceMode, callback, error_handler=None
+    ):
         """
         Subscribe accounts update
 
@@ -205,12 +234,14 @@ class AccountClient(object):
                 channel["ch"] = "accounts.update"
             else:
                 channel["ch"] = "accounts.update#{mode}".format(mode=_mode)
-            return orjson.dumps(channel)
+            return orjson.dumps(channel).decode("utf-8")
 
         def subscription(connection):
             connection.send(accounts_update_channel(mode))
 
-        self.sub_socket_req_client.execute_subscribe_v2(subscription, callback, error_handler, is_trade=True)
+        self.sub_socket_req_client.execute_subscribe_v2(
+            subscription, callback, error_handler, is_trade=True
+        )
 
     def req_account_balance(self, callback, client_req_id=None, error_handler=None):
         """
@@ -234,16 +265,21 @@ class AccountClient(object):
             channel = dict()
             channel["op"] = "req"
             channel["topic"] = "accounts.list"
-            channel["cid"] = str(_client_req_id) if _client_req_id else str(get_current_timestamp())
-            return orjson.dumps(channel)
+            channel["cid"] = (
+                str(_client_req_id) if _client_req_id else str(get_current_timestamp())
+            )
+            return orjson.dumps(channel).decode("utf-8")
 
         def subscription(connection):
             connection.send(request_account_list_channel(client_req_id))
 
-        self.web_socket_req_client.execute_subscribe_v1(subscription, callback, error_handler, is_trade=True)
+        self.web_socket_req_client.execute_subscribe_v1(
+            subscription, callback, error_handler, is_trade=True
+        )
 
-    def transfer_between_futures_and_pro(self, currency: str, amount: float,
-                                         transfer_type: TransferFuturesPro) -> int:
+    def transfer_between_futures_and_pro(
+        self, currency: str, amount: float, transfer_type: TransferFuturesPro
+    ) -> int:
         """
         Transfer Asset between Futures and Contract.
 
@@ -257,18 +293,23 @@ class AccountClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
         check_should_not_none(transfer_type, "transfer_type")
-        params = {
-            "currency": currency,
-            "amount": amount,
-            "type": transfer_type
-        }
+        params = {"currency": currency, "amount": amount, "type": transfer_type}
         channel = "/v1/futures/transfer"
 
-        return self.rest_api_sync_client.request_process(HttpMethod.POST_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.POST_SIGN, channel, params
+        )
 
-    def get_account_history(self, account_id: int, currency: str = None,
-                            transact_types: str = None, start_time: int = None, end_time: int = None,
-                            sort: str = None, size: int = None):
+    def get_account_history(
+        self,
+        account_id: int,
+        currency: str = None,
+        transact_types: str = None,
+        start_time: int = None,
+        end_time: int = None,
+        sort: str = None,
+        size: int = None,
+    ):
         """
         get account change record
         :param account_id: account id (mandatory)
@@ -294,10 +335,12 @@ class AccountClient(object):
             "start-time": start_time,
             "end-time": end_time,
             "sort": sort,
-            "size": size
+            "size": size,
         }
         channel = "/v1/account/history"
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, params
+        )
 
     def post_sub_uid_management(self, sub_uid: int, action: str):
         """
@@ -309,16 +352,23 @@ class AccountClient(object):
         check_should_not_none(sub_uid, "subUid")
         check_should_not_none(action, "action")
 
-        params = {
-            "subUid": sub_uid,
-            "action": action
-        }
+        params = {"subUid": sub_uid, "action": action}
         channel = "/v2/sub-user/management"
-        return self.rest_api_sync_client.request_process(HttpMethod.POST_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.POST_SIGN, channel, params
+        )
 
-    def get_account_ledger(self, account_id: int, currency: str = None, transact_types: str = None,
-                           start_time: int = None, end_time: int = None, sort: str = None, limit: int = None,
-                           from_id: int = None) -> list:
+    def get_account_ledger(
+        self,
+        account_id: int,
+        currency: str = None,
+        transact_types: str = None,
+        start_time: int = None,
+        end_time: int = None,
+        sort: str = None,
+        limit: int = None,
+        from_id: int = None,
+    ) -> list:
         """
         get account ledger
         :param from_id:  from_id:
@@ -346,13 +396,24 @@ class AccountClient(object):
             "endTime": end_time,
             "sort": sort,
             "limit": limit,
-            "fromId": from_id
+            "fromId": from_id,
         }
         channel = "/v2/account/ledger"
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, params
+        )
 
-    def post_account_transfer(self, from_user: int, from_account_type: str, from_account: int, to_user: int,
-                              to_account_type: str, to_account: int, currency: str, amount: str):
+    def post_account_transfer(
+        self,
+        from_user: int,
+        from_account_type: str,
+        from_account: int,
+        to_user: int,
+        to_account_type: str,
+        to_account: int,
+        currency: str,
+        amount: str,
+    ):
         check_should_not_none(from_user, "from-user")
         check_should_not_none(from_account_type, "from-account-type")
         check_should_not_none(from_account, "from_account")
@@ -372,38 +433,48 @@ class AccountClient(object):
             "to-account-type": to_account_type,
             "to-account": to_account,
             "currency": currency,
-            "amount": amount
+            "amount": amount,
         }
         channel = "/v1/account/transfer"
-        return self.rest_api_sync_client.request_process(HttpMethod.POST_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.POST_SIGN, channel, params
+        )
 
-    def get_account_asset_valuation(self, account_type, valuation_currency: str = None, sub_uid: str = None):
+    def get_account_asset_valuation(
+        self, account_type, valuation_currency: str = None, sub_uid: str = None
+    ):
         check_should_not_none(account_type, "account-type")
 
         params = {
             "accountType": account_type,
             "valuationCurrency": valuation_currency.upper(),
-            "subUid": sub_uid
+            "subUid": sub_uid,
         }
         channel = "/v2/account/asset-valuation"
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, params
+        )
 
     def get_account_point(self, sub_uid: str = None):
-        params = {
-            "subUid": sub_uid
-        }
+        params = {"subUid": sub_uid}
         channel = "/v2/point/account"
 
-        return self.rest_api_sync_client.request_process(HttpMethod.GET_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.GET_SIGN, channel, params
+        )
 
-    def post_point_transfer(self, from_uid: str, to_uid: str, group_id: str, amount: str):
+    def post_point_transfer(
+        self, from_uid: str, to_uid: str, group_id: str, amount: str
+    ):
         channel = "/v2/point/transfer"
         params = {
             "fromUid": from_uid,
             "toUid": to_uid,
             "groupId": group_id,
-            "amount": amount
+            "amount": amount,
         }
 
-        return self.rest_api_sync_client.request_process(HttpMethod.POST_SIGN, channel, params)
+        return self.rest_api_sync_client.request_process(
+            HttpMethod.POST_SIGN, channel, params
+        )

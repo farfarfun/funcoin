@@ -68,7 +68,7 @@ class PublicChannel(BaseChannel):
         return PublicChannel(channel="trades", instId=instId)
 
     @staticmethod
-    def public_estimated_price(instType='FUTURES', uly="BTC-USDT"):
+    def public_estimated_price(instType="FUTURES", uly="BTC-USDT"):
         """
         预估交割/行权价格频道
         """
@@ -222,26 +222,32 @@ class PrivateChannel(BaseChannel):
         """
         持仓频道
         """
-        return PrivateChannel(channel="positions", instType=instType, uly=uly, instId=instId)
+        return PrivateChannel(
+            channel="positions", instType=instType, uly=uly, instId=instId
+        )
 
     @staticmethod
     def private_orders(instType="FUTURES", uly="BTC-USDT", instId="BTC-USDT"):
         """
         持仓频道
         """
-        return PrivateChannel(channel="orders", instType=instType, uly=uly, instId=instId)
+        return PrivateChannel(
+            channel="orders", instType=instType, uly=uly, instId=instId
+        )
 
     @staticmethod
     def private_orders_algo(instType="FUTURES", uly="BTC-USDT", instId="BTC-USDT"):
         """
         持仓频道
         """
-        return PrivateChannel(channel="orders-algo", instType=instType, uly=uly, instId=instId)
+        return PrivateChannel(
+            channel="orders-algo", instType=instType, uly=uly, instId=instId
+        )
 
 
-'''
+"""
 交易 trade
-'''
+"""
 
 # 下单
 # trade_param = {"id": "1512", "op": "order", "args": [{"side": "buy", "instId": "BTC-USDT", "tdMode": "isolated", "ordType": "limit", "px": "19777", "sz": "1"}]}

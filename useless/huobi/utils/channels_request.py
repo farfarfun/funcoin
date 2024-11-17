@@ -55,11 +55,15 @@ def request_account_list_channel(client_req_id=None):
     channel = dict()
     channel["op"] = "req"
     channel["topic"] = "accounts.list"
-    channel["cid"] = str(client_req_id) if client_req_id else str(get_current_timestamp())
+    channel["cid"] = (
+        str(client_req_id) if client_req_id else str(get_current_timestamp())
+    )
     return json.dumps(channel)
 
 
-def request_order_list_channel(symbol, account_id, states_str=None, client_req_id=None, more_key={}):
+def request_order_list_channel(
+    symbol, account_id, states_str=None, client_req_id=None, more_key={}
+):
     channel = dict()
     try:
         channel["op"] = "req"
@@ -68,7 +72,9 @@ def request_order_list_channel(symbol, account_id, states_str=None, client_req_i
         channel["symbol"] = symbol
         if states_str and len(states_str):
             channel["states"] = str(states_str)
-        channel["cid"] = str(client_req_id) if client_req_id else str(get_current_timestamp())
+        channel["cid"] = (
+            str(client_req_id) if client_req_id else str(get_current_timestamp())
+        )
         channel = dict_add_new(channel, more_key)
 
     except Exception as e:
@@ -81,5 +87,7 @@ def request_order_detail_channel(order_id, client_req_id=None):
     channel["op"] = "req"
     channel["topic"] = "orders.detail"
     channel["order-id"] = str(order_id)
-    channel["cid"] = str(client_req_id) if client_req_id else str(get_current_timestamp())
+    channel["cid"] = (
+        str(client_req_id) if client_req_id else str(get_current_timestamp())
+    )
     return json.dumps(channel)

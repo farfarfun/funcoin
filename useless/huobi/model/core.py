@@ -1,6 +1,5 @@
-
 class BaseModel:
-    def __init__(self, name='base', *args, **kwargs):
+    def __init__(self, name="base", *args, **kwargs):
         self.name = name
 
     def train(self, df, *args, **kwargs):

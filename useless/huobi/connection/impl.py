@@ -44,34 +44,51 @@ def check_responses(dict_data):
             if status == "error":
                 err_code = dict_data.get("err-code", 0)
                 err_msg = dict_data.get("err-msg", "")
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR,
-                                        "[Executing] " + str(err_code) + ": " + err_msg)
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR,
+                    "[Executing] " + str(err_code) + ": " + err_msg,
+                )
             elif status != "ok":
-                raise HuobiApiException(HuobiApiException.RUNTIME_ERROR,
-                                        "[Invoking] Response is not expected: " + status)
+                raise HuobiApiException(
+                    HuobiApiException.RUNTIME_ERROR,
+                    "[Invoking] Response is not expected: " + status,
+                )
         # for https://status.huobigroup.com/api/v2/summary.json in example example/generic/get_system_status.py
         elif TypeCheck.is_dict(status):
             if dict_data.get("page") and dict_data.get("components"):
                 pass
             else:
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR, "[Executing] System is in maintenances")
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR,
+                    "[Executing] System is in maintenances",
+                )
     elif code:
         code_int = int(code)
         if code_int != 200:
             err_code = dict_data.get("code", 0)
             err_msg = dict_data.get("message", "")
-            raise HuobiApiException(HuobiApiException.EXEC_ERROR,
-                                    "[Executing] " + str(err_code) + ": " + err_msg)
+            raise HuobiApiException(
+                HuobiApiException.EXEC_ERROR,
+                "[Executing] " + str(err_code) + ": " + err_msg,
+            )
     elif success is not None:
         if bool(success) is False:
             err_code = etf_result_check(dict_data.get("code"))
             err_msg = dict_data.get("message", "")
             if err_code == "":
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR, "[Executing] " + err_msg)
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR, "[Executing] " + err_msg
+                )
             else:
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR, "[Executing] " + str(err_code) + ": " + err_msg)
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR,
+                    "[Executing] " + str(err_code) + ": " + err_msg,
+                )
     else:
-        raise HuobiApiException(HuobiApiException.RUNTIME_ERROR, "[Invoking] Status cannot be found in response.")
+        raise HuobiApiException(
+            HuobiApiException.RUNTIME_ERROR,
+            "[Invoking] Status cannot be found in response.",
+        )
 
 
 def call_sync(request, is_checked=False):
@@ -82,7 +99,11 @@ def call_sync(request, is_checked=False):
         return Response(response=response.text)
 
     elif request.method == "POST":
-        response = session.post(request.host + request.url, data=json.dumps(request.post_body), headers=request.header)
+        response = session.post(
+            request.host + request.url,
+            data=json.dumps(request.post_body),
+            headers=request.header,
+        )
         return Response(response=response.text)
 
 
@@ -102,7 +123,11 @@ def call_sync_perforence_test(request, is_checked=False):
 
     elif request.method == "POST":
         inner_start_time = time.time()
-        response = session.post(request.host + request.url, data=json.dumps(request.post_body), headers=request.header)
+        response = session.post(
+            request.host + request.url,
+            data=json.dumps(request.post_body),
+            headers=request.header,
+        )
         inner_end_time = time.time()
         cost_manual = round(inner_end_time - inner_start_time, 6)
         req_cost = response.elapsed.total_seconds()
@@ -113,7 +138,6 @@ def call_sync_perforence_test(request, is_checked=False):
 
 
 class RestApiRequest(object):
-
     def __init__(self):
         self.method = ""
         self.url = ""
@@ -147,16 +171,26 @@ def on_open(original_connection):
 def websocket_func(*args):
     try:
         websocket_manage = args[0]
-        websocket_manage.original_connection = websocket.WebSocketApp(websocket_manage.url,
-                                                                      on_message=on_message,
-                                                                      on_error=on_error,
-                                                                      on_close=on_close)
+        websocket_manage.original_connection = websocket.WebSocketApp(
+            websocket_manage.url,
+            on_message=on_message,
+            on_error=on_error,
+            on_close=on_close,
+        )
         global websocket_connection_handler
-        websocket_connection_handler[websocket_manage.original_connection] = websocket_manage
-        websocket_manage.logger.info("[Sub][" + str(websocket_manage.id) + "] Connecting...")
+        websocket_connection_handler[websocket_manage.original_connection] = (
+            websocket_manage
+        )
+        websocket_manage.logger.info(
+            "[Sub][" + str(websocket_manage.id) + "] Connecting..."
+        )
         websocket_manage.original_connection.on_open = on_open
-        websocket_manage.original_connection.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-        websocket_manage.logger.info("[Sub][" + str(websocket_manage.id) + "] Connection event loop down")
+        websocket_manage.original_connection.run_forever(
+            sslopt={"cert_reqs": ssl.CERT_NONE}
+        )
+        websocket_manage.logger.info(
+            "[Sub][" + str(websocket_manage.id) + "] Connection event loop down"
+        )
         if websocket_manage.state == ConnectionState.CONNECTED:
             websocket_manage.state = ConnectionState.IDLE
     except Exception as ex:
@@ -164,7 +198,6 @@ def websocket_func(*args):
 
 
 class WebsocketManage:
-
     def __init__(self, api_key, secret_key, uri, request):
         self.__thread = None
         self.__market_url = HUOBI_WEBSOCKET_URI_PRO + "/ws"
@@ -203,9 +236,11 @@ class WebsocketManage:
             self.original_connection.close()
             self.original_connection = None
             self.state = ConnectionState.WAIT_RECONNECT
-            self.reconnect_at = + delay_in_ms
-        self.logger.warning("[Sub][%d] Lost connectiong for %d ms, will try reconnecting " %
-                            (self.id, self.reconnect_at))
+            self.reconnect_at = +delay_in_ms
+        self.logger.warning(
+            "[Sub][%d] Lost connectiong for %d ms, will try reconnecting "
+            % (self.id, self.reconnect_at)
+        )
 
     def re_connect(self):
         if get_current_timestamp() > self.reconnect_at:
@@ -238,13 +273,16 @@ class WebsocketManage:
             try:
                 if self.request.api_version == ApiVersion.VERSION_V1:
                     builder = UrlParamsBuilder()
-                    create_signature(self.__api_key, self.__secret_key,
-                                     "GET", self.url, builder)
+                    create_signature(
+                        self.__api_key, self.__secret_key, "GET", self.url, builder
+                    )
                     builder.put_url("op", "auth")
                     self.send(builder.build_url_to_json())
                 elif self.request.api_version == ApiVersion.VERSION_V2:
                     builder = UrlParamsBuilder()
-                    create_signature_v2(self.__api_key, self.__secret_key, "GET", self.url, builder)
+                    create_signature_v2(
+                        self.__api_key, self.__secret_key, "GET", self.url, builder
+                    )
                     self.send(builder.build_url_to_json())
                 else:
                     self.on_error("api version for create the signature fill failed")
@@ -258,7 +296,9 @@ class WebsocketManage:
 
     def on_error(self, error_message):
         if self.request.error_handler is not None:
-            exception = HuobiApiException(HuobiApiException.SUBSCRIPTION_ERROR, error_message)
+            exception = HuobiApiException(
+                HuobiApiException.SUBSCRIPTION_ERROR, error_message
+            )
             self.request.error_handler(exception)
         self.logger.error("[Sub][" + str(self.id) + "] " + str(error_message))
 
@@ -355,8 +395,11 @@ class WebsocketManage:
             if self.request.update_callback is not None:
                 self.request.update_callback(res)
         except Exception as e:
-            self.on_error("Process error: " + str(e)
-                          + " You should capture the exception in your error handler")
+            self.on_error(
+                "Process error: "
+                + str(e)
+                + " You should capture the exception in your error handler"
+            )
 
         # websocket request will close the connection after receive
         if self.request.auto_close:
@@ -366,30 +409,31 @@ class WebsocketManage:
         # print("### __process_ping_on_trading_line ###")
         # self.send("{\"op\":\"pong\",\"ts\":" + str(get_current_timestamp()) + "}")
         PrintBasic.print_basic(ping_ts, "response time")
-        self.send("{\"op\":\"pong\",\"ts\":" + str(ping_ts) + "}")
+        self.send('{"op":"pong","ts":' + str(ping_ts) + "}")
         return
 
     def __process_ping_on_market_line(self, ping_ts):
         # print("### __process_ping_on_market_line ###")
         # self.send("{\"pong\":" + str(get_current_timestamp()) + "}")
         PrintBasic.print_basic(ping_ts, "response time")
-        self.send("{\"pong\":" + str(ping_ts) + "}")
+        self.send('{"pong":' + str(ping_ts) + "}")
         return
 
     def __process_ping_on_v2_trade(self, ping_ts):
         # PrintDate.timestamp_to_date(ping_ts)
-        self.send("{\"action\": \"pong\",\"data\": {\"ts\": " + str(ping_ts) + "}}")
+        self.send('{"action": "pong","data": {"ts": ' + str(ping_ts) + "}}")
         return
 
     def close_on_error(self):
         if self.original_connection is not None:
             self.original_connection.close()
             self.state = ConnectionState.CLOSED_ON_ERROR
-            self.logger.error("[Sub][" + str(self.id) + "] Connection is closing due to error")
+            self.logger.error(
+                "[Sub][" + str(self.id) + "] Connection is closing due to error"
+            )
 
 
 class WebsocketRequest(object):
-
     def __init__(self):
         self.subscription_handler = None
         self.auto_close = False  # close connection after receive data, for subscribe set False, for request set True
@@ -411,15 +455,23 @@ def watch_dog_job(*args):
             if watch_dog_obj.is_auto_connect:
                 ts = get_current_timestamp() - websocket_manage.last_receive_time
                 if ts > watch_dog_obj.heart_beat_limit_ms:
-                    watch_dog_obj.logger.warning("[Sub][" + str(websocket_manage.id) + "] No response from server")
-                    websocket_manage.close_and_wait_reconnect(watch_dog_obj.wait_reconnect_millisecond())
+                    watch_dog_obj.logger.warning(
+                        "[Sub]["
+                        + str(websocket_manage.id)
+                        + "] No response from server"
+                    )
+                    websocket_manage.close_and_wait_reconnect(
+                        watch_dog_obj.wait_reconnect_millisecond()
+                    )
         elif websocket_manage.state == ConnectionState.WAIT_RECONNECT:
             watch_dog_obj.logger.warning("[Sub] call re_connect")
             websocket_manage.re_connect()
             pass
         elif websocket_manage.state == ConnectionState.CLOSED_ON_ERROR:
             if watch_dog_obj.is_auto_connect:
-                websocket_manage.close_and_wait_reconnect(watch_dog_obj.reconnect_after_ms)
+                websocket_manage.close_and_wait_reconnect(
+                    watch_dog_obj.reconnect_after_ms
+                )
                 pass
 
 
@@ -427,17 +479,25 @@ class WebSocketWatchDog(threading.Thread):
     mutex = threading.Lock()
     websocket_manage_list = list()
 
-    def __init__(self,
-                 is_auto_connect=True,
-                 heart_beat_limit_ms=CONNECT_HEART_BEAT_LIMIT_MS,
-                 reconnect_after_ms=RECONNECT_AFTER_TIME_MS):
+    def __init__(
+        self,
+        is_auto_connect=True,
+        heart_beat_limit_ms=CONNECT_HEART_BEAT_LIMIT_MS,
+        reconnect_after_ms=RECONNECT_AFTER_TIME_MS,
+    ):
         threading.Thread.__init__(self)
         self.is_auto_connect = is_auto_connect
         self.heart_beat_limit_ms = heart_beat_limit_ms
-        self.reconnect_after_ms = reconnect_after_ms if reconnect_after_ms > heart_beat_limit_ms else heart_beat_limit_ms
+        self.reconnect_after_ms = (
+            reconnect_after_ms
+            if reconnect_after_ms > heart_beat_limit_ms
+            else heart_beat_limit_ms
+        )
         self.logger = logging.getLogger("huobi-client")
         self.scheduler = BlockingScheduler()
-        self.scheduler.add_job(watch_dog_job, "interval", max_instances=10, seconds=1, args=[self])
+        self.scheduler.add_job(
+            watch_dog_job, "interval", max_instances=10, seconds=1, args=[self]
+        )
         self.start()
 
     def run(self):

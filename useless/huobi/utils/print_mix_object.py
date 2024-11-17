@@ -2,7 +2,7 @@ import sys
 import time
 
 BASIC_DATA_TYPE = (int, str, float)
-BASIC_DATA_TYPE_BOOL = (bool)
+BASIC_DATA_TYPE_BOOL = bool
 
 TYPE_BASIC = "type_basic"
 TYPE_BOOL = "type_bool"
@@ -73,7 +73,11 @@ class PrintBasic:
         if not obj:
             return -1
 
-        members = [attr for attr in dir(obj) if not callable(attr) and not attr.startswith("__")]
+        members = [
+            attr
+            for attr in dir(obj)
+            if not callable(attr) and not attr.startswith("__")
+        ]
         for member_def in members:
             val_str = str(getattr(obj, member_def))
             print(member_def + ":" + val_str)
@@ -122,8 +126,8 @@ class PrintList:
         if obj_type != TYPE_LIST:
             return -2
 
-        print ("data count : ", (len(obj_list)))
-        print ("\n")
+        print("data count : ", (len(obj_list)))
+        print("\n")
         for idx, row in enumerate(obj_list):
             print("data number " + (str(idx)) + " :")
             PrintList.print_origin_object(row)
@@ -141,8 +145,8 @@ class PrintList:
         if obj_type != TYPE_DICT:
             return -2
 
-        print ("data count : ", (len(obj_dict)))
-        print ("\n")
+        print("data count : ", (len(obj_dict)))
+        print("\n")
         for key, row in obj_dict.items():
             PrintBasic.print_basic(str(key) + " :")
             PrintList.print_origin_object(row)
@@ -156,7 +160,7 @@ class PrintMix:
     @staticmethod
     def print_data(data):
         if not data:
-            print (sys._getframe().f_code.co_name + " none data")
+            print(sys._getframe().f_code.co_name + " none data")
             return -1
 
         obj_type = TypeCheck.get_obj_type(data)
@@ -172,11 +176,10 @@ class PrintMix:
         elif obj_type == TYPE_OBJECT:
             PrintList.print_origin_object(data)
         else:
-            print (sys._getframe().f_code.co_name + " enter unknown")
+            print(sys._getframe().f_code.co_name + " enter unknown")
             return -2
 
         return 0
-
 
 
 class PrintDate:
@@ -189,6 +192,7 @@ class PrintDate:
             print("ping " + str(ts_minsecond) + ":" + dt)
         except Exception as e:
             print(e)
+
 
 """
 if __name__ == "__main__":
@@ -228,5 +232,5 @@ if __name__ == "__main__":
     print(isinstance(symbol_dict, object))
     """
 
-    a=['s', 'h', 'i']
+    a = ["s", "h", "i"]
     PrintList.print_list_data(a)

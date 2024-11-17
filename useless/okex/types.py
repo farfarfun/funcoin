@@ -1,21 +1,16 @@
-
 from enum import Enum
 
 
 class Response:
     def __init__(self, data=None):
         data = data or {}
-        self.code = data['code']
-        self.msg = data['msg']
-        self.data = data['data']
+        self.code = data["code"]
+        self.msg = data["msg"]
+        self.data = data["data"]
         self.dataframe_trans = lambda x: x
 
     def __str__(self):
-        res = {
-            'code': self.code,
-            'data': self.data,
-            'msg': self.msg
-        }
+        res = {"code": self.code, "data": self.data, "msg": self.msg}
         return str(res)
 
     def data_size(self):

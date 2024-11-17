@@ -64,7 +64,9 @@ def mbp_increase_channel(symbol, levels):
 
 def mbp_full_channel(symbol, levels):
     channel = dict()
-    channel["sub"] = "market.{symbol}.mbp.refresh.{levels}".format(symbol=symbol, levels=levels)
+    channel["sub"] = "market.{symbol}.mbp.refresh.{levels}".format(
+        symbol=symbol, levels=levels
+    )
     channel["id"] = str(get_current_timestamp())
     return json.dumps(channel)
 

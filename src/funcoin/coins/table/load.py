@@ -65,7 +65,9 @@ class LoadTask:
         # 压缩
         with tarfile.open(file_pro.file_path_tar, "w|xz") as tar:
             tar.add(file_pro.file_path_csv)
-        self.table.upload(file=file_pro.file_path_tar, partition=file_pro.partition, overwrite=True)
+        self.table.upload(
+            file=file_pro.file_path_tar, partition=file_pro.partition, overwrite=True
+        )
 
         # 删除
         if os.path.exists(file_pro.file_path_csv):
@@ -99,7 +101,9 @@ class LoadTask:
         self.table.update_partition_meta(refresh=True)
 
         start_day = datetime.now() - timedelta(days=1)
-        file_pro = FileProperty(self.exchange.name.lower()).daily(start_day.strftime("%Y%m%d"))
+        file_pro = FileProperty(self.exchange.name.lower()).daily(
+            start_day.strftime("%Y%m%d")
+        )
         exists_data = dict([file["name"], file] for file in self.table.partition_meta())
 
         for i in range(days):

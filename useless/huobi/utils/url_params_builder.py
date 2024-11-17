@@ -3,7 +3,6 @@ import urllib.parse
 
 
 class UrlParamsBuilder(object):
-
     def __init__(self):
         self.param_map = dict()
         self.post_map = dict()
@@ -31,4 +30,3 @@ class UrlParamsBuilder(object):
 
     def build_url_to_json(self):
         return json.dumps(self.param_map)
-

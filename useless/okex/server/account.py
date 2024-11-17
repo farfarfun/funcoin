@@ -6,16 +6,20 @@ from funcoin.okex.database.client import OkexClientAccountBalance
 
 
 class AccountAccount(RedisConnect):
-    def __init__(self, prefix="/account", cache_prefix='okex_account_balance', *args, **kwargs):
-        super(AccountAccount, self).__init__(prefix=prefix, cache_prefix=cache_prefix, *args, **kwargs)
+    def __init__(
+        self, prefix="/account", cache_prefix="okex_account_balance", *args, **kwargs
+    ):
+        super(AccountAccount, self).__init__(
+            prefix=prefix, cache_prefix=cache_prefix, *args, **kwargs
+        )
         add_api_routes(self)
         self.session = create_session()
         create_all()
 
-    @api_route('/update', description="update market tickers")
+    @api_route("/update", description="update market tickers")
     def update_value(self, suffix=""):
         try:
-            data = account_api.get_account().data[0]['details']
+            data = account_api.get_account().data[0]["details"]
             self.put_value(self.get_key(suffix=suffix), data)
             for detail in data:
                 print(detail)

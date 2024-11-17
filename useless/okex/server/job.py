@@ -22,7 +22,11 @@ channel_update_time = time.time()
 
 
 def channel_listen():
-    details = session.query(OkexClientAccountBalance).filter(OkexClientAccountBalance.eqUsd > 10).all()
+    details = (
+        session.query(OkexClientAccountBalance)
+        .filter(OkexClientAccountBalance.eqUsd > 10)
+        .all()
+    )
     channels = []
     global channel_update_time
     if time.time() < channel_update_time + 10:
@@ -37,6 +41,8 @@ def channel_listen():
     return channels
 
 
-connect = PublicConnect([PublicChannel.public_tickers().to_json()], channel_listen=channel_listen)
+connect = PublicConnect(
+    [PublicChannel.public_tickers().to_json()], channel_listen=channel_listen
+)
 connect.add_handle(PublicTickers())
 connect.run()

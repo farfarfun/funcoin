@@ -14,11 +14,20 @@ except Exception as e:
 def backup_tables(sqlite_file):
     tran = MySQLtoSQLite(
         mysql_database="funcoin",
-        mysql_user=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='user'),
-        mysql_password=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='password'),
-        mysql_host=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='host'),
-        mysql_port=read_secret(cate1='funcoin', cate2='dataset', cate3='mysql', cate4='port'),
-        mysql_tables=['funcoin_lanzou'],
-        sqlite_file=sqlite_file)
+        mysql_user=read_secret(
+            cate1="funcoin", cate2="dataset", cate3="mysql", cate4="user"
+        ),
+        mysql_password=read_secret(
+            cate1="funcoin", cate2="dataset", cate3="mysql", cate4="password"
+        ),
+        mysql_host=read_secret(
+            cate1="funcoin", cate2="dataset", cate3="mysql", cate4="host"
+        ),
+        mysql_port=read_secret(
+            cate1="funcoin", cate2="dataset", cate3="mysql", cate4="port"
+        ),
+        mysql_tables=["funcoin_lanzou"],
+        sqlite_file=sqlite_file,
+    )
 
     tran.transfer()

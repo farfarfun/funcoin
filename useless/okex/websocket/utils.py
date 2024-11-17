@@ -7,10 +7,10 @@ def get_local_timestamp():
 
 
 def partial(res):
-    data_obj = res['data'][0]
-    bids = data_obj['bids']
-    asks = data_obj['asks']
-    instrument_id = res['arg']['instId']
+    data_obj = res["data"][0]
+    bids = data_obj["bids"]
+    asks = data_obj["asks"]
+    instrument_id = res["arg"]["instId"]
     # print('全量数据bids为:' + str(bids))
     # print('档数为:' + str(len(bids)))
     # print('全量数据asks为:' + str(asks))
@@ -20,7 +20,7 @@ def partial(res):
 
 def update_bids(res, bids_p):
     # 获取增量bids数据
-    bids_u = res['data'][0]['bids']
+    bids_u = res["data"][0]["bids"]
     # print('增量数据bids为:' + str(bids_u))
     # print('档数为:' + str(len(bids_u)))
     # bids合并
@@ -28,7 +28,7 @@ def update_bids(res, bids_p):
         bid_price = i[0]
         for j in bids_p:
             if bid_price == j[0]:
-                if i[1] == '0':
+                if i[1] == "0":
                     bids_p.remove(j)
                     break
                 else:
@@ -46,7 +46,7 @@ def update_bids(res, bids_p):
 
 def update_asks(res, asks_p):
     # 获取增量asks数据
-    asks_u = res['data'][0]['asks']
+    asks_u = res["data"][0]["asks"]
     # print('增量数据asks为:' + str(asks_u))
     # print('档数为:' + str(len(asks_u)))
     # asks合并
@@ -54,7 +54,7 @@ def update_asks(res, asks_p):
         ask_price = i[0]
         for j in asks_p:
             if ask_price == j[0]:
-                if i[1] == '0':
+                if i[1] == "0":
                     asks_p.remove(j)
                     break
                 else:
@@ -88,7 +88,7 @@ def check(bids, asks):
         bids_l.append(bids[count_bid - 1])
         count_bid += 1
     for j in bids_l:
-        str_bid = ':'.join(j[0: 2])
+        str_bid = ":".join(j[0:2])
         bid_l.append(str_bid)
     # 获取ask档str
     asks_l = []
@@ -100,25 +100,25 @@ def check(bids, asks):
         asks_l.append(asks[count_ask - 1])
         count_ask += 1
     for k in asks_l:
-        str_ask = ':'.join(k[0: 2])
+        str_ask = ":".join(k[0:2])
         ask_l.append(str_ask)
     # 拼接str
-    num = ''
+    num = ""
     if len(bid_l) == len(ask_l):
         for m in range(len(bid_l)):
-            num += bid_l[m] + ':' + ask_l[m] + ':'
+            num += bid_l[m] + ":" + ask_l[m] + ":"
     elif len(bid_l) > len(ask_l):
         # bid档比ask档多
         for n in range(len(ask_l)):
-            num += bid_l[n] + ':' + ask_l[n] + ':'
+            num += bid_l[n] + ":" + ask_l[n] + ":"
         for l in range(len(ask_l), len(bid_l)):
-            num += bid_l[l] + ':'
+            num += bid_l[l] + ":"
     elif len(bid_l) < len(ask_l):
         # ask档比bid档多
         for n in range(len(bid_l)):
-            num += bid_l[n] + ':' + ask_l[n] + ':'
+            num += bid_l[n] + ":" + ask_l[n] + ":"
         for l in range(len(bid_l), len(ask_l)):
-            num += ask_l[l] + ':'
+            num += ask_l[l] + ":"
 
     new_num = num[:-1]
     int_checksum = zlib.crc32(new_num.encode())

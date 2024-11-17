@@ -1,6 +1,5 @@
-"""
+""" """
 
-"""
 import json
 import zipfile
 from datetime import datetime
@@ -141,10 +140,20 @@ class HistoryDownload:
             self.all_symbols = all_symbols
 
     def download_symbol_period_day(
-        self, path_url, symbol, period, current, delete_zip=True, delete_check=True, *args, **kwargs
+        self,
+        path_url,
+        symbol,
+        period,
+        current,
+        delete_zip=True,
+        delete_check=True,
+        *args,
+        **kwargs,
     ) -> Response:
         url = f"{path_url}/{symbol.upper()}-{period}-{current.year}-{current.month:02}-{current.day:02}"
-        download_dir = os.path.join(self.download_dir, self.data_type, self.type, period)
+        download_dir = os.path.join(
+            self.download_dir, self.data_type, self.type, period
+        )
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
         zip_file = f"{url}.zip"
@@ -172,11 +181,15 @@ class HistoryDownload:
 
         return response
 
-    def download_symbol_period(self, symbol, period, start_date=None, end_date=None, *args, **kwargs) -> tuple:
+    def download_symbol_period(
+        self, symbol, period, start_date=None, end_date=None, *args, **kwargs
+    ) -> tuple:
         if period in [
             "trades",
         ]:
-            path_url = f"{self.pre_url}/{self.data_type}/{self.type}/{self.freq}/{symbol}"
+            path_url = (
+                f"{self.pre_url}/{self.data_type}/{self.type}/{self.freq}/{symbol}"
+            )
         else:
             path_url = f"{self.pre_url}/{self.data_type}/{self.type}/{self.freq}/{symbol}/{period}"
         start_date = start_date or self.start_date
@@ -186,16 +199,32 @@ class HistoryDownload:
         if interval.days > 10:
             for index in tqdm(range(interval.days), desc=f"{symbol}"):
                 current = start_date + timedelta(days=index)
-                all_res.append(self.download_symbol_period_day(path_url, symbol, period, current, *args, **kwargs))
+                all_res.append(
+                    self.download_symbol_period_day(
+                        path_url, symbol, period, current, *args, **kwargs
+                    )
+                )
         else:
             for index in range(interval.days):
                 current = start_date + timedelta(days=index)
-                all_res.append(self.download_symbol_period_day(path_url, symbol, period, current, *args, **kwargs))
+                all_res.append(
+                    self.download_symbol_period_day(
+                        path_url, symbol, period, current, *args, **kwargs
+                    )
+                )
         all_oks = [response for response in all_res if response.status]
         all_errs = [response for response in all_res if not response.status]
         return all_oks, all_errs
 
-    def download_symbols(self, all_symbols=None, all_periods=None, start_date=None, end_date=None, *args, **kwargs):
+    def download_symbols(
+        self,
+        all_symbols=None,
+        all_periods=None,
+        start_date=None,
+        end_date=None,
+        *args,
+        **kwargs,
+    ):
         """return date is: [start, end)"""
         self.init_parameters()
         all_symbols = all_symbols or self.all_symbols
@@ -241,10 +270,18 @@ class SymbolHistory:
         self.tradeDB = TradeDetail(db_path=self.db_path)
         self.kline_1min = Kline1MinDetail(db_path=self.db_path, conn=self.tradeDB.conn)
         self.kline_5min = Kline5MinDetail(db_path=self.db_path, conn=self.tradeDB.conn)
-        self.kline_15min = Kline15MinDetail(db_path=self.db_path, conn=self.tradeDB.conn)
-        self.kline_30min = Kline30MinDetail(db_path=self.db_path, conn=self.tradeDB.conn)
-        self.kline_60min = Kline60MinDetail(db_path=self.db_path, conn=self.tradeDB.conn)
-        self.kline_4hour = Kline4HourDetail(db_path=self.db_path, conn=self.tradeDB.conn)
+        self.kline_15min = Kline15MinDetail(
+            db_path=self.db_path, conn=self.tradeDB.conn
+        )
+        self.kline_30min = Kline30MinDetail(
+            db_path=self.db_path, conn=self.tradeDB.conn
+        )
+        self.kline_60min = Kline60MinDetail(
+            db_path=self.db_path, conn=self.tradeDB.conn
+        )
+        self.kline_4hour = Kline4HourDetail(
+            db_path=self.db_path, conn=self.tradeDB.conn
+        )
         self.kline_1day = Kline1DayDetail(db_path=self.db_path, conn=self.tradeDB.conn)
         self.init()
 
@@ -274,45 +311,126 @@ class SymbolHistory:
     def insert_klines(self, start_date, end_date):
         self.insert_kline(
             self.kline_1min,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="1min"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="1min",
+            ),
         )
         self.insert_kline(
             self.kline_5min,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="5min"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="5min",
+            ),
         )
         self.insert_kline(
             self.kline_15min,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="15min"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="15min",
+            ),
         )
         self.insert_kline(
             self.kline_30min,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="30min"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="30min",
+            ),
         )
         self.insert_kline(
             self.kline_60min,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="60min"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="60min",
+            ),
         )
         self.insert_kline(
             self.kline_4hour,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="4hour"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="4hour",
+            ),
         )
         self.insert_kline(
             self.kline_1day,
-            load_symbol_all(symbol=self.symbol, start_date=start_date, end_date=end_date, period="1day"),
+            load_symbol_all(
+                symbol=self.symbol,
+                start_date=start_date,
+                end_date=end_date,
+                period="1day",
+            ),
         )
 
     def insert_data(self, start_date, end_date):
         self.insert_trades(start_date, end_date)
         self.insert_klines(start_date, end_date)
 
-        print(self.tradeDB.select("select count(1) as num from " + self.tradeDB.table_name))
-        print("1min\t{}".format(self.kline_1min.select("select count(1) as num from " + self.kline_1min.table_name)))
-        print("5min\t{}".format(self.kline_5min.select("select count(1) as num from " + self.kline_5min.table_name)))
-        print("15min\t{}".format(self.kline_15min.select("select count(1) as num from " + self.kline_15min.table_name)))
-        print("30min\t{}".format(self.kline_30min.select("select count(1) as num from " + self.kline_30min.table_name)))
-        print("60min\t{}".format(self.kline_60min.select("select count(1) as num from " + self.kline_60min.table_name)))
-        print("4hour\t{}".format(self.kline_4hour.select("select count(1) as num from " + self.kline_4hour.table_name)))
-        print("1day\t{}".format(self.kline_1day.select("select count(1) as num from " + self.kline_1day.table_name)))
+        print(
+            self.tradeDB.select(
+                "select count(1) as num from " + self.tradeDB.table_name
+            )
+        )
+        print(
+            "1min\t{}".format(
+                self.kline_1min.select(
+                    "select count(1) as num from " + self.kline_1min.table_name
+                )
+            )
+        )
+        print(
+            "5min\t{}".format(
+                self.kline_5min.select(
+                    "select count(1) as num from " + self.kline_5min.table_name
+                )
+            )
+        )
+        print(
+            "15min\t{}".format(
+                self.kline_15min.select(
+                    "select count(1) as num from " + self.kline_15min.table_name
+                )
+            )
+        )
+        print(
+            "30min\t{}".format(
+                self.kline_30min.select(
+                    "select count(1) as num from " + self.kline_30min.table_name
+                )
+            )
+        )
+        print(
+            "60min\t{}".format(
+                self.kline_60min.select(
+                    "select count(1) as num from " + self.kline_60min.table_name
+                )
+            )
+        )
+        print(
+            "4hour\t{}".format(
+                self.kline_4hour.select(
+                    "select count(1) as num from " + self.kline_4hour.table_name
+                )
+            )
+        )
+        print(
+            "1day\t{}".format(
+                self.kline_1day.select(
+                    "select count(1) as num from " + self.kline_1day.table_name
+                )
+            )
+        )
 
     def run(self, start_date=datetime(2021, 5, 25), end_date=datetime(2021, 6, 23)):
         self.insert_data(start_date, end_date)
@@ -346,7 +464,10 @@ def load_daily_all(
         end_date=date,
         download_dir=download_dir2,
     )
-    file_path = os.path.join(download_dir, f'{history.data_type}_{history.type}_{period}-{date.strftime("%Y%m%d")}.csv')
+    file_path = os.path.join(
+        download_dir,
+        f'{history.data_type}_{history.type}_{period}-{date.strftime("%Y%m%d")}.csv',
+    )
     if os.path.exists(file_path) and not overwrite:
         return file_path
     if history.data_type == "trade":
@@ -387,7 +508,9 @@ def load_symbol_all(
         download_dir=download_dir2,
     )
     history.download_klines()
-    file_path = os.path.join(download_dir, f"{history.data_type}_{history.type}_{period}-{symbol}.csv")
+    file_path = os.path.join(
+        download_dir, f"{history.data_type}_{history.type}_{period}-{symbol}.csv"
+    )
     with open(file_path, "w") as new_file:
         for item in list_file(download_dir2, deep=10):
             for txt in open(item, "r"):
@@ -398,7 +521,9 @@ def load_symbol_all(
     return file_path
 
 
-def load_symbol_all_to_db(symbol="SHIBUSDT", start_date=datetime(2021, 5, 1), end_date=datetime(2021, 5, 3)):
+def load_symbol_all_to_db(
+    symbol="SHIBUSDT", start_date=datetime(2021, 5, 1), end_date=datetime(2021, 5, 3)
+):
     history = SymbolHistory(symbol=symbol)
     history.run(start_date=start_date, end_date=end_date)
     return history.db_path

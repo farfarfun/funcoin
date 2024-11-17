@@ -3,17 +3,28 @@ from sqlalchemy import BIGINT, Column, Float, String, Table, func, select
 
 
 class TradeData(BaseTable):
-    def __init__(self, table_name="trade_data", prefix="com", suffix="com", *args, **kwargs):
+    def __init__(
+        self, table_name="trade_data", prefix="com", suffix="com", *args, **kwargs
+    ):
         table_name = f"{prefix.lower()}_{table_name}_{suffix.lower()}"
-        super(TradeData, self).__init__(table_name=table_name, db_suffix=prefix.lower(), *args, **kwargs)
+        super(TradeData, self).__init__(
+            table_name=table_name, db_suffix=prefix.lower(), *args, **kwargs
+        )
         self.table = Table(
             self.table_name,
             self.meta,
             Column("symbol", String(30), comment="symbol", primary_key=True),
             Column("id", String(50), comment="trade_id", primary_key=True),
             Column("timestamp", BIGINT, comment="timestamp", default=0),
-            Column("type", String(10), comment="order type, 'market', 'limit'", default=""),
-            Column("side", String(10), comment="direction of the trade, 'buy' or 'sell'", default=""),
+            Column(
+                "type", String(10), comment="order type, 'market', 'limit'", default=""
+            ),
+            Column(
+                "side",
+                String(10),
+                comment="direction of the trade, 'buy' or 'sell'",
+                default="",
+            ),
             Column("price", Float, comment="price", default=0),
             Column("amount", Float, comment="amount", default=0),
             extend_existing=True,

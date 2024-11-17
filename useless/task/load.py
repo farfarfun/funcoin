@@ -12,7 +12,8 @@ class LoadTask(BaseTask):
 
     def __init__(self, *args, **kwargs):
         self.path_root = (
-            read_secret(cate1="funcoin", cate2="path", cate3="local", cate4="path_root") or "~/workspace/tmp"
+            read_secret(cate1="funcoin", cate2="path", cate3="local", cate4="path_root")
+            or "~/workspace/tmp"
         )
         super(LoadTask, self).__init__(*args, **kwargs)
 

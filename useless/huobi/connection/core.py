@@ -8,7 +8,12 @@ from funcoin.huobi.connection.impl import (
     call_sync,
     call_sync_perforence_test,
 )
-from funcoin.huobi.constant.system import ApiVersion, HttpMethod, WebSocketDefine, get_default_server_url
+from funcoin.huobi.constant.system import (
+    ApiVersion,
+    HttpMethod,
+    WebSocketDefine,
+    get_default_server_url,
+)
 from funcoin.huobi.utils.api_signature import create_signature
 from funcoin.huobi.utils.huobi_api_exception import HuobiApiException
 from funcoin.huobi.utils.url_params_builder import UrlParamsBuilder
@@ -50,7 +55,9 @@ class RestApiSyncClient(object):
                 for key, value in params.items():
                     builder.put_post(key, value)
             else:
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR, "[error] undefined HTTP method")
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR, "[error] undefined HTTP method"
+                )
 
         if method == HttpMethod.GET:
             request = self.__create_request_by_get(url, builder)
@@ -61,7 +68,10 @@ class RestApiSyncClient(object):
         elif method == HttpMethod.POST:
             request = self.__create_request_by_post_with_signature(url, builder)
         else:
-            raise HuobiApiException(HuobiApiException.INPUT_ERROR, "[Input] " + method + "  is invalid http method")
+            raise HuobiApiException(
+                HuobiApiException.INPUT_ERROR,
+                "[Input] " + method + "  is invalid http method",
+            )
 
         return request
 
@@ -89,7 +99,9 @@ class RestApiSyncClient(object):
                 if isinstance(params, list):
                     builder.post_list = params
             else:
-                raise HuobiApiException(HuobiApiException.EXEC_ERROR, "[error] undefined HTTP method")
+                raise HuobiApiException(
+                    HuobiApiException.EXEC_ERROR, "[error] undefined HTTP method"
+                )
 
         request = self.__create_request_by_post_with_signature(url, builder)
 
@@ -131,7 +143,13 @@ class RestApiSyncClient(object):
         request = RestApiRequest()
         request.method = "POST"
         request.host = self.__server_url
-        create_signature(self.__api_key, self.__secret_key, request.method, request.host + url, builder)
+        create_signature(
+            self.__api_key,
+            self.__secret_key,
+            request.method,
+            request.host + url,
+            builder,
+        )
         request.header.update({"Content-Type": "application/json"})
         if len(builder.post_list):  # specify for case : /v1/order/batch-orders
             request.post_body = builder.post_list
@@ -144,7 +162,13 @@ class RestApiSyncClient(object):
         request = RestApiRequest()
         request.method = "GET"
         request.host = self.__server_url
-        create_signature(self.__api_key, self.__secret_key, request.method, request.host + url, builder)
+        create_signature(
+            self.__api_key,
+            self.__secret_key,
+            request.method,
+            request.host + url,
+            builder,
+        )
         request.header.update({"Content-Type": "application/x-www-form-urlencoded"})
         request.url = url + builder.build_url()
         return request
@@ -173,46 +197,79 @@ class SubscribeClient(object):
         self.__websocket_manage_list = list()
 
     def __create_websocket_manage(self, request):
-        manager = WebsocketManage(self.__api_key, self.__secret_key, self.__uri, request)
+        manager = WebsocketManage(
+            self.__api_key, self.__secret_key, self.__uri, request
+        )
         self.__websocket_manage_list.append(manager)
         manager.connect()
         SubscribeClient.subscribe_watch_dog.on_connection_created(manager)
 
-    def create_request(self, subscription_handler, callback, error_handler, is_trade, is_mbp_feed=False):
+    def create_request(
+        self, subscription_handler, callback, error_handler, is_trade, is_mbp_feed=False
+    ):
         request = WebsocketRequest()
         request.subscription_handler = subscription_handler
         request.is_trading = is_trade
         request.is_mbp_feed = is_mbp_feed
-        request.auto_close = False  # subscribe need connection. websocket request need close request.
+        request.auto_close = (
+            False  # subscribe need connection. websocket request need close request.
+        )
 
         request.update_callback = callback
         request.error_handler = error_handler
         return request
 
-    def create_request_v1(self, subscription_handler, callback, error_handler, is_trade=False):
+    def create_request_v1(
+        self, subscription_handler, callback, error_handler, is_trade=False
+    ):
         request = self.create_request(
-            subscription_handler=subscription_handler, callback=callback, error_handler=error_handler, is_trade=is_trade
+            subscription_handler=subscription_handler,
+            callback=callback,
+            error_handler=error_handler,
+            is_trade=is_trade,
         )
         request.api_version = ApiVersion.VERSION_V1
         return request
 
-    def create_request_v2(self, subscription_handler, callback, error_handler, is_trade=False):
+    def create_request_v2(
+        self, subscription_handler, callback, error_handler, is_trade=False
+    ):
         request = self.create_request(
-            subscription_handler=subscription_handler, callback=callback, error_handler=error_handler, is_trade=is_trade
+            subscription_handler=subscription_handler,
+            callback=callback,
+            error_handler=error_handler,
+            is_trade=is_trade,
         )
         request.api_version = ApiVersion.VERSION_V2
         return request
 
-    def execute_subscribe_v1(self, subscription_handler, callback, error_handler, is_trade=False):
-        request = self.create_request_v1(subscription_handler, callback, error_handler, is_trade)
+    def execute_subscribe_v1(
+        self, subscription_handler, callback, error_handler, is_trade=False
+    ):
+        request = self.create_request_v1(
+            subscription_handler, callback, error_handler, is_trade
+        )
         self.__create_websocket_manage(request)
 
-    def execute_subscribe_v2(self, subscription_handler, callback, error_handler, is_trade=False):
-        request = self.create_request_v2(subscription_handler, callback, error_handler, is_trade)
+    def execute_subscribe_v2(
+        self, subscription_handler, callback, error_handler, is_trade=False
+    ):
+        request = self.create_request_v2(
+            subscription_handler, callback, error_handler, is_trade
+        )
         self.__create_websocket_manage(request)
 
-    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False, is_mbp_feed=True):
-        request = self.create_request(subscription_handler, callback, error_handler, is_trade, is_mbp_feed)
+    def execute_subscribe_mbp(
+        self,
+        subscription_handler,
+        callback,
+        error_handler,
+        is_trade=False,
+        is_mbp_feed=True,
+    ):
+        request = self.create_request(
+            subscription_handler, callback, error_handler, is_trade, is_mbp_feed
+        )
         self.__create_websocket_manage(request)
 
     def unsubscribe_all(self):
@@ -241,28 +298,56 @@ class WebSocketReqClient(object):
             logger = logging.getLogger("huobi-client")
             logger.setLevel(level=logging.INFO)
             handler = logging.StreamHandler()
-            handler.setFormatter(logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+            handler.setFormatter(
+                logging.Formatter(
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                )
+            )
             logger.addHandler(handler)
 
     def __create_websocket_manage(self, request):
-        manager = WebsocketManage(self.__api_key, self.__secret_key, self.__uri, request)
+        manager = WebsocketManage(
+            self.__api_key, self.__secret_key, self.__uri, request
+        )
         manager.connect()
 
-    def create_request(self, subscription_handler, callback, error_handler, is_trade=False, is_mbp_feed=False):
+    def create_request(
+        self,
+        subscription_handler,
+        callback,
+        error_handler,
+        is_trade=False,
+        is_mbp_feed=False,
+    ):
         request = WebsocketRequest()
         request.subscription_handler = subscription_handler
         request.is_trading = is_trade
         request.is_mbp_feed = is_mbp_feed
-        request.auto_close = True  # for websocket request, auto close the connection after request.
+        request.auto_close = (
+            True  # for websocket request, auto close the connection after request.
+        )
 
         request.update_callback = callback
         request.error_handler = error_handler
         return request
 
-    def execute_subscribe_v1(self, subscription_handler, callback, error_handler, is_trade=False):
-        request = self.create_request(subscription_handler, callback, error_handler, is_trade)
+    def execute_subscribe_v1(
+        self, subscription_handler, callback, error_handler, is_trade=False
+    ):
+        request = self.create_request(
+            subscription_handler, callback, error_handler, is_trade
+        )
         self.__create_websocket_manage(request)
 
-    def execute_subscribe_mbp(self, subscription_handler, callback, error_handler, is_trade=False, is_mbp_feed=True):
-        request = self.create_request(subscription_handler, callback, error_handler, is_trade, is_mbp_feed)
+    def execute_subscribe_mbp(
+        self,
+        subscription_handler,
+        callback,
+        error_handler,
+        is_trade=False,
+        is_mbp_feed=True,
+    ):
+        request = self.create_request(
+            subscription_handler, callback, error_handler, is_trade, is_mbp_feed
+        )
         self.__create_websocket_manage(request)

@@ -30,9 +30,15 @@ class BaseConnect:
     ):
         self.url = url
         self.channels = channels
-        self.api_key = api_key or read_secret(cate1="coin", cate2="okex", cate3="api_key")
-        self.secret_key = secret_key or read_secret(cate1="coin", cate2="okex", cate3="secret_key")
-        self.passphrase = passphrase or read_secret(cate1="coin", cate2="okex", cate3="passphrase")
+        self.api_key = api_key or read_secret(
+            cate1="coin", cate2="okex", cate3="api_key"
+        )
+        self.secret_key = secret_key or read_secret(
+            cate1="coin", cate2="okex", cate3="secret_key"
+        )
+        self.passphrase = passphrase or read_secret(
+            cate1="coin", cate2="okex", cate3="passphrase"
+        )
         self.private = private
         self.ws: WebSocket = create_connection(self.url)
         self.handles: List[BaseHandle] = []
@@ -85,12 +91,21 @@ class BaseConnect:
             timestamp = str(get_local_timestamp())
             message = timestamp + "GET" + "/users/self/verify"
             mac = hmac.new(
-                bytes(self.secret_key, encoding="utf8"), bytes(message, encoding="utf-8"), digestmod="sha256"
+                bytes(self.secret_key, encoding="utf8"),
+                bytes(message, encoding="utf-8"),
+                digestmod="sha256",
             )
             sign = base64.b64encode(mac.digest()).decode("utf-8")
             login_param = {
                 "op": "login",
-                "args": [{"apiKey": self.api_key, "passphrase": self.passphrase, "timestamp": timestamp, "sign": sign}],
+                "args": [
+                    {
+                        "apiKey": self.api_key,
+                        "passphrase": self.passphrase,
+                        "timestamp": timestamp,
+                        "sign": sign,
+                    }
+                ],
             }
             login_str = json.dumps(login_param)
         else:
@@ -117,7 +132,11 @@ class PublicConnect(BaseConnect):
 class PrivateConnect(BaseConnect):
     def __init__(self, channels, *args, **kwargs):
         super(PrivateConnect, self).__init__(
-            url="wss://ws.okx.com:8443/ws/v5/private", private=True, channels=channels, *args, **kwargs
+            url="wss://ws.okx.com:8443/ws/v5/private",
+            private=True,
+            channels=channels,
+            *args,
+            **kwargs,
         )
 
 

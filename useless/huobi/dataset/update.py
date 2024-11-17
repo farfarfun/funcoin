@@ -47,7 +47,9 @@ class TradeUpdateHistory:
         return res
 
     def insert_symbol(self):
-        self.symbolDB.insert_list(self.replace_key(self.generic.get_exchange_symbols().data))
+        self.symbolDB.insert_list(
+            self.replace_key(self.generic.get_exchange_symbols().data)
+        )
 
     def insert_trade(self, symbol):
         history = self.market.get_history_trade(symbol=symbol, size=2000)
@@ -69,37 +71,58 @@ class TradeUpdateHistory:
 
         self.kline_1min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_5min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="5min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="5min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_15min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="15min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="15min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_30min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="30min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="30min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_60min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="60min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="60min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_4hour.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="4hour", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="4hour", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_1day.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1day", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1day", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
 
@@ -118,7 +141,11 @@ class TradeUpdateHistory:
         self.kline_1year.auto_save()
 
     def insert_data(self, trade=True, kline=True):
-        symbols = self.symbolDB.select("select symbol from {} where state ='online'".format(self.symbolDB.table_name))
+        symbols = self.symbolDB.select(
+            "select symbol from {} where state ='online'".format(
+                self.symbolDB.table_name
+            )
+        )
         for symbol in tqdm(symbols):
             try:
                 symbol = symbol["symbol"]
@@ -130,18 +157,86 @@ class TradeUpdateHistory:
             except Exception as e:
                 print(e)
 
-        print(self.symbolDB.select("select count(1) as num from " + self.symbolDB.table_name))
-        print(self.tradeDB.select("select count(1) as num from " + self.tradeDB.table_name))
-        print("1min\t{}".format(self.kline_1min.select("select count(1) as num from " + self.kline_1min.table_name)))
-        print("5min\t{}".format(self.kline_5min.select("select count(1) as num from " + self.kline_5min.table_name)))
-        print("15min\t{}".format(self.kline_15min.select("select count(1) as num from " + self.kline_15min.table_name)))
-        print("30min\t{}".format(self.kline_30min.select("select count(1) as num from " + self.kline_30min.table_name)))
-        print("60min\t{}".format(self.kline_60min.select("select count(1) as num from " + self.kline_60min.table_name)))
-        print("4hour\t{}".format(self.kline_4hour.select("select count(1) as num from " + self.kline_4hour.table_name)))
-        print("1day\t{}".format(self.kline_1day.select("select count(1) as num from " + self.kline_1day.table_name)))
-        print("1week\t{}".format(self.kline_1week.select("select count(1) as num from " + self.kline_1week.table_name)))
-        print("1mon\t{}".format(self.kline_1mon.select("select count(1) as num from " + self.kline_1mon.table_name)))
-        print("1year\t{}".format(self.kline_1year.select("select count(1) as num from " + self.kline_1year.table_name)))
+        print(
+            self.symbolDB.select(
+                "select count(1) as num from " + self.symbolDB.table_name
+            )
+        )
+        print(
+            self.tradeDB.select(
+                "select count(1) as num from " + self.tradeDB.table_name
+            )
+        )
+        print(
+            "1min\t{}".format(
+                self.kline_1min.select(
+                    "select count(1) as num from " + self.kline_1min.table_name
+                )
+            )
+        )
+        print(
+            "5min\t{}".format(
+                self.kline_5min.select(
+                    "select count(1) as num from " + self.kline_5min.table_name
+                )
+            )
+        )
+        print(
+            "15min\t{}".format(
+                self.kline_15min.select(
+                    "select count(1) as num from " + self.kline_15min.table_name
+                )
+            )
+        )
+        print(
+            "30min\t{}".format(
+                self.kline_30min.select(
+                    "select count(1) as num from " + self.kline_30min.table_name
+                )
+            )
+        )
+        print(
+            "60min\t{}".format(
+                self.kline_60min.select(
+                    "select count(1) as num from " + self.kline_60min.table_name
+                )
+            )
+        )
+        print(
+            "4hour\t{}".format(
+                self.kline_4hour.select(
+                    "select count(1) as num from " + self.kline_4hour.table_name
+                )
+            )
+        )
+        print(
+            "1day\t{}".format(
+                self.kline_1day.select(
+                    "select count(1) as num from " + self.kline_1day.table_name
+                )
+            )
+        )
+        print(
+            "1week\t{}".format(
+                self.kline_1week.select(
+                    "select count(1) as num from " + self.kline_1week.table_name
+                )
+            )
+        )
+        print(
+            "1mon\t{}".format(
+                self.kline_1mon.select(
+                    "select count(1) as num from " + self.kline_1mon.table_name
+                )
+            )
+        )
+        print(
+            "1year\t{}".format(
+                self.kline_1year.select(
+                    "select count(1) as num from " + self.kline_1year.table_name
+                )
+            )
+        )
 
     def run(self):
         t = 0
@@ -213,7 +308,9 @@ class TradeUpdate:
         return res
 
     def insert_symbol(self):
-        self.symbolDB.insert_list(self.replace_key(self.generic.get_exchange_symbols().data))
+        self.symbolDB.insert_list(
+            self.replace_key(self.generic.get_exchange_symbols().data)
+        )
 
     def insert_trade(self, symbol):
         history = self.market.get_history_trade(symbol=symbol, size=2000)
@@ -225,52 +322,82 @@ class TradeUpdate:
     def insert_kline(self, symbol):
         self.kline_1min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_5min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="5min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="5min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_15min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="15min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="15min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_30min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="30min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="30min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_60min.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="60min", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="60min", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_4hour.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="4hour", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="4hour", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_1day.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1day", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1day", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_1mon.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1mon", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1mon", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_1week.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1week", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1week", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
         self.kline_1year.insert_list(
             self.replace_key(
-                self.market.get_candlestick(symbol=symbol, period="1year", size=2000).dict_data["data"], symbol
+                self.market.get_candlestick(
+                    symbol=symbol, period="1year", size=2000
+                ).dict_data["data"],
+                symbol,
             )
         )
 
@@ -289,7 +416,11 @@ class TradeUpdate:
         self.kline_1year.auto_save()
 
     def insert_data(self, trade=True, kline=True):
-        symbols = self.symbolDB.select("select symbol from {} where state ='online'".format(self.symbolDB.table_name))
+        symbols = self.symbolDB.select(
+            "select symbol from {} where state ='online'".format(
+                self.symbolDB.table_name
+            )
+        )
         for symbol in tqdm(symbols):
             try:
                 symbol = symbol["symbol"]
@@ -301,18 +432,86 @@ class TradeUpdate:
             except Exception as e:
                 print(e)
 
-        print(self.symbolDB.select("select count(1) as num from " + self.symbolDB.table_name))
-        print(self.tradeDB.select("select count(1) as num from " + self.tradeDB.table_name))
-        print("1min\t{}".format(self.kline_1min.select("select count(1) as num from " + self.kline_1min.table_name)))
-        print("5min\t{}".format(self.kline_5min.select("select count(1) as num from " + self.kline_5min.table_name)))
-        print("15min\t{}".format(self.kline_15min.select("select count(1) as num from " + self.kline_15min.table_name)))
-        print("30min\t{}".format(self.kline_30min.select("select count(1) as num from " + self.kline_30min.table_name)))
-        print("60min\t{}".format(self.kline_60min.select("select count(1) as num from " + self.kline_60min.table_name)))
-        print("4hour\t{}".format(self.kline_4hour.select("select count(1) as num from " + self.kline_4hour.table_name)))
-        print("1day\t{}".format(self.kline_1day.select("select count(1) as num from " + self.kline_1day.table_name)))
-        print("1week\t{}".format(self.kline_1week.select("select count(1) as num from " + self.kline_1week.table_name)))
-        print("1mon\t{}".format(self.kline_1mon.select("select count(1) as num from " + self.kline_1mon.table_name)))
-        print("1year\t{}".format(self.kline_1year.select("select count(1) as num from " + self.kline_1year.table_name)))
+        print(
+            self.symbolDB.select(
+                "select count(1) as num from " + self.symbolDB.table_name
+            )
+        )
+        print(
+            self.tradeDB.select(
+                "select count(1) as num from " + self.tradeDB.table_name
+            )
+        )
+        print(
+            "1min\t{}".format(
+                self.kline_1min.select(
+                    "select count(1) as num from " + self.kline_1min.table_name
+                )
+            )
+        )
+        print(
+            "5min\t{}".format(
+                self.kline_5min.select(
+                    "select count(1) as num from " + self.kline_5min.table_name
+                )
+            )
+        )
+        print(
+            "15min\t{}".format(
+                self.kline_15min.select(
+                    "select count(1) as num from " + self.kline_15min.table_name
+                )
+            )
+        )
+        print(
+            "30min\t{}".format(
+                self.kline_30min.select(
+                    "select count(1) as num from " + self.kline_30min.table_name
+                )
+            )
+        )
+        print(
+            "60min\t{}".format(
+                self.kline_60min.select(
+                    "select count(1) as num from " + self.kline_60min.table_name
+                )
+            )
+        )
+        print(
+            "4hour\t{}".format(
+                self.kline_4hour.select(
+                    "select count(1) as num from " + self.kline_4hour.table_name
+                )
+            )
+        )
+        print(
+            "1day\t{}".format(
+                self.kline_1day.select(
+                    "select count(1) as num from " + self.kline_1day.table_name
+                )
+            )
+        )
+        print(
+            "1week\t{}".format(
+                self.kline_1week.select(
+                    "select count(1) as num from " + self.kline_1week.table_name
+                )
+            )
+        )
+        print(
+            "1mon\t{}".format(
+                self.kline_1mon.select(
+                    "select count(1) as num from " + self.kline_1mon.table_name
+                )
+            )
+        )
+        print(
+            "1year\t{}".format(
+                self.kline_1year.select(
+                    "select count(1) as num from " + self.kline_1year.table_name
+                )
+            )
+        )
 
     def run(self):
         t = 0

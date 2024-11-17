@@ -3,10 +3,14 @@ from sqlalchemy import BIGINT, Column, Float, String, Table, func, select
 
 
 class KlineData(BaseTable):
-    def __init__(self, table_name="kline_data_1min", prefix="com", suffix="com", *args, **kwargs):
+    def __init__(
+        self, table_name="kline_data_1min", prefix="com", suffix="com", *args, **kwargs
+    ):
         table_name = f"{prefix.lower()}_{table_name}_{suffix.lower()}"
 
-        super(KlineData, self).__init__(table_name=table_name, db_suffix=prefix.lower(), *args, **kwargs)
+        super(KlineData, self).__init__(
+            table_name=table_name, db_suffix=prefix.lower(), *args, **kwargs
+        )
         self.table = Table(
             self.table_name,
             self.meta,

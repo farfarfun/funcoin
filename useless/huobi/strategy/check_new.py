@@ -43,7 +43,9 @@ class FindNewCoin:
                 self.new_coin(_symbol)
 
             elif state != self.symbol_dict[symbol]:
-                self.msg_huobi.send_msg(f"state change:{symbol}:{self.symbol_dict[symbol]}->{state}")
+                self.msg_huobi.send_msg(
+                    f"state change:{symbol}:{self.symbol_dict[symbol]}->{state}"
+                )
                 self.symbol_dict[symbol] = state
                 self.new_coin(_symbol)
             else:
@@ -51,10 +53,16 @@ class FindNewCoin:
 
     def new_coin(self, _symbol):
         symbol, state = _symbol["symbol"], _symbol["state"]
-        if state == "online" and _symbol["quote-currency"] == "usdt" and not symbol.endswith("3lusdt"):
+        if (
+            state == "online"
+            and _symbol["quote-currency"] == "usdt"
+            and not symbol.endswith("3lusdt")
+        ):
             trade = TradeOrder()
             trade.buy(symbol=_symbol["symbol"], amount=50 * _symbol["min-order-value"])
-            self.msg_huobi.send_msg(f"buy new coin:{symbol}:{self.symbol_dict[symbol]}->{state}")
+            self.msg_huobi.send_msg(
+                f"buy new coin:{symbol}:{self.symbol_dict[symbol]}->{state}"
+            )
 
     def run(self):
         step = 1

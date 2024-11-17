@@ -4,10 +4,10 @@ from funcoin.okex.database.client import OkexClientAccountBalance
 
 
 class BaseAPI(APIRouter):
-    def __init__(self, prefix='/base', *args, **kwargs):
+    def __init__(self, prefix="/base", *args, **kwargs):
         super(BaseAPI, self).__init__(prefix=prefix, *args, **kwargs)
         add_api_routes(self)
 
-    @api_route('/account/balance/update', description="AccountBalance")
+    @api_route("/account/balance/update", description="AccountBalance")
     def account_balance_update(self):
         return OkexClientAccountBalance.update()

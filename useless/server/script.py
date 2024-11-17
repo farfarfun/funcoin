@@ -36,8 +36,12 @@ def funcoin():
 
     download_parser.add_argument("-ds", default=None, help="the date")
     download_parser.add_argument("-days", default=7, type=int, help="the date")
-    download_parser.add_argument("--freq", nargs=2, metavar=("daily", "dailys"), default="daily", help="")
-    download_parser.add_argument("--timeframe", nargs=2, metavar=("1m", "5m"), default="1m", help="")
+    download_parser.add_argument(
+        "--freq", nargs=2, metavar=("daily", "dailys"), default="daily", help=""
+    )
+    download_parser.add_argument(
+        "--timeframe", nargs=2, metavar=("1m", "5m"), default="1m", help=""
+    )
     download_parser.set_defaults(func=download)  # 设置默认函数
 
     # 添加子命令

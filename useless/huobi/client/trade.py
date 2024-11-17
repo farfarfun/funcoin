@@ -1,21 +1,35 @@
 import time
 
-from funcoin.huobi.connection import (RestApiSyncClient, SubscribeClient,
-                                       WebSocketReqClient)
-from funcoin.huobi.constant import (AccountType, HttpMethod, OrderSide,
-                                     OrderSource, OrderState, OrderType,
-                                     TransferFuturesPro)
-from funcoin.huobi.utils import (check_currency, check_list, check_range,
-                                  check_should_not_none, check_symbol,
-                                  check_symbol_list, format_date,
-                                  orders_update_channel,
-                                  request_order_detail_channel,
-                                  request_order_list_channel,
-                                  trade_clearing_channel)
+from funcoin.huobi.connection import (
+    RestApiSyncClient,
+    SubscribeClient,
+    WebSocketReqClient,
+)
+from funcoin.huobi.constant import (
+    AccountType,
+    HttpMethod,
+    OrderSide,
+    OrderSource,
+    OrderState,
+    OrderType,
+    TransferFuturesPro,
+)
+from funcoin.huobi.utils import (
+    check_currency,
+    check_list,
+    check_range,
+    check_should_not_none,
+    check_symbol,
+    check_symbol_list,
+    format_date,
+    orders_update_channel,
+    request_order_detail_channel,
+    request_order_list_channel,
+    trade_clearing_channel,
+)
 
 
 class TradeClient(object):
-
     def __init__(self, *args, **kwargs):
         """
         Create the request client instance.
@@ -44,9 +58,7 @@ class TradeClient(object):
         channel = "/v1/fee/fee-rate/get"
         check_symbol(symbols)
 
-        params = {
-            "symbols": symbols
-        }
+        params = {"symbols": symbols}
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
 
     def get_transact_fee_rate(self, symbols: str) -> list:
@@ -58,9 +70,7 @@ class TradeClient(object):
         """
         check_symbol(symbols)
 
-        params = {
-            "symbols": symbols
-        }
+        params = {"symbols": symbols}
         channel = "/v2/reference/transact-fee-rate"
 
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
@@ -89,11 +99,25 @@ class TradeClient(object):
                 connection.send(orders_update_channel(val))
                 time.sleep(0.01)
 
-        self.trade_client_socket_sub.execute_subscribe_v2(subscription, callback, error_handler, is_trade=True)
+        self.trade_client_socket_sub.execute_subscribe_v2(
+            subscription, callback, error_handler, is_trade=True
+        )
 
-    def req_order_list(self, symbol: str, account_id: int, callback, order_states: str,
-                       order_types: str = None, start_date: str = None, end_date: str = None, from_id=None,
-                       direct=None, size=None, client_req_id: str = None, error_handler=None):
+    def req_order_list(
+        self,
+        symbol: str,
+        account_id: int,
+        callback,
+        order_states: str,
+        order_types: str = None,
+        start_date: str = None,
+        end_date: str = None,
+        from_id=None,
+        direct=None,
+        size=None,
+        client_req_id: str = None,
+        error_handler=None,
+    ):
         """
         request order list.
 
@@ -131,17 +155,27 @@ class TradeClient(object):
             "from": from_id,
             "direct": direct,
             "size": size,
-            "client-req-id": client_req_id
+            "client-req-id": client_req_id,
         }
 
         def subscription(connection):
-            connection.send(request_order_list_channel(symbol=symbol, account_id=account_id,
-                                                       states_str=order_states, client_req_id=client_req_id,
-                                                       more_key=params))
+            connection.send(
+                request_order_list_channel(
+                    symbol=symbol,
+                    account_id=account_id,
+                    states_str=order_states,
+                    client_req_id=client_req_id,
+                    more_key=params,
+                )
+            )
 
-        self.trade_client_socket.execute_subscribe_v1(subscription, callback, error_handler, is_trade=True)
+        self.trade_client_socket.execute_subscribe_v1(
+            subscription, callback, error_handler, is_trade=True
+        )
 
-    def req_order_detail(self, order_id: str, callback, client_req_id: str = None, error_handler=None):
+    def req_order_detail(
+        self, order_id: str, callback, client_req_id: str = None, error_handler=None
+    ):
         """
         Subscribe candlestick/kline event. If the candlestick/kline is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -165,7 +199,9 @@ class TradeClient(object):
         def subscription(connection):
             connection.send(request_order_detail_channel(order_id, client_req_id))
 
-        self.trade_client_socket.execute_subscribe_v1(subscription, callback, error_handler, is_trade=True)
+        self.trade_client_socket.execute_subscribe_v1(
+            subscription, callback, error_handler, is_trade=True
+        )
 
     def get_order(self, order_id: int):
         """
@@ -184,7 +220,9 @@ class TradeClient(object):
             path = "/v1/order/orders/{}"
             return path.format(order_id)
 
-        return self.trade_client.request_process(HttpMethod.GET_SIGN, get_channel(), params)
+        return self.trade_client.request_process(
+            HttpMethod.GET_SIGN, get_channel(), params
+        )
 
     def get_order_by_client_order_id(self, client_order_id):
         check_should_not_none(client_order_id, "clientOrderId")
@@ -195,9 +233,17 @@ class TradeClient(object):
         channel = "/v1/order/orders/getClientOrder"
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
 
-    def get_orders(self, symbol: str, order_state: OrderState, order_type: OrderType = None,
-                   start_date: str = None, end_date: str = None, start_id: 'int' = None,
-                   size: 'int' = None, direct=None) -> list:
+    def get_orders(
+        self,
+        symbol: str,
+        order_state: OrderState,
+        order_type: OrderType = None,
+        start_date: str = None,
+        end_date: str = None,
+        start_id: "int" = None,
+        size: "int" = None,
+        direct=None,
+    ) -> list:
         check_symbol(symbol)
         check_should_not_none(order_state, "order_state")
         start_date = format_date(start_date, "start_date")
@@ -211,14 +257,21 @@ class TradeClient(object):
             "from": start_id,
             "states": order_state,
             "size": size,
-            "direct": direct
+            "direct": direct,
         }
         channel = "/v1/order/orders"
 
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
 
-    def get_open_orders(self, symbol: str, account_id: 'int', side: 'OrderSide' = None,
-                        size: 'int' = None, from_id=None, direct=None) -> list:
+    def get_open_orders(
+        self,
+        symbol: str,
+        account_id: "int",
+        side: "OrderSide" = None,
+        size: "int" = None,
+        from_id=None,
+        direct=None,
+    ) -> list:
         """
         The request of get open orders.
 
@@ -240,13 +293,15 @@ class TradeClient(object):
             "side": side,
             "size": size,
             "from": from_id,
-            "direct": direct
+            "direct": direct,
         }
         channel = "/v1/order/openOrders"
 
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
 
-    def get_history_orders(self, symbol=None, start_time=None, end_time=None, size=None, direct=None) -> list:
+    def get_history_orders(
+        self, symbol=None, start_time=None, end_time=None, size=None, direct=None
+    ) -> list:
         """
         Transfer Asset between Futures and Contract.
 
@@ -262,17 +317,22 @@ class TradeClient(object):
             "start-time": start_time,
             "end-time": end_time,
             "size": size,
-            "direct": direct
+            "direct": direct,
         }
         channel = "/v1/order/history"
 
         return self.trade_client.request_process(HttpMethod.GET_SIGN, channel, params)
 
-    def get_match_result(self, symbol: str, order_type: OrderSide = None, start_date: str = None,
-                         end_date: str = None,
-                         size: 'int' = None,
-                         from_id: 'int' = None,
-                         direct: str = None):
+    def get_match_result(
+        self,
+        symbol: str,
+        order_type: OrderSide = None,
+        start_date: str = None,
+        end_date: str = None,
+        size: "int" = None,
+        from_id: "int" = None,
+        direct: str = None,
+    ):
         """
         Search for the trade records of an account.
 
@@ -298,7 +358,7 @@ class TradeClient(object):
             "types": order_type,
             "size": size,
             "from": from_id,
-            "direct": direct
+            "direct": direct,
         }
         channel = "/v1/order/matchresults"
 
@@ -313,15 +373,15 @@ class TradeClient(object):
         """
         check_should_not_none(order_id, "order_id")
 
-        params = {
-            "order_id": order_id
-        }
+        params = {"order_id": order_id}
 
         def get_channel():
             path = "/v1/order/orders/{}/matchresults"
             return path.format(order_id)
 
-        return self.trade_client.request_process(HttpMethod.GET_SIGN, get_channel(), params)
+        return self.trade_client.request_process(
+            HttpMethod.GET_SIGN, get_channel(), params
+        )
 
     @staticmethod
     def order_source_desc(account_type):
@@ -332,18 +392,29 @@ class TradeClient(object):
         return default_source
 
     @staticmethod
-    def create_order_param_check(symbol: str, account_id: int, order_type: OrderType, amount: float,
-                                 price: float, source: str, client_order_id=None, stop_price=None, operator=None):
+    def create_order_param_check(
+        symbol: str,
+        account_id: int,
+        order_type: OrderType,
+        amount: float,
+        price: float,
+        source: str,
+        client_order_id=None,
+        stop_price=None,
+        operator=None,
+    ):
         check_symbol(symbol)
         check_should_not_none(account_id, "account_id")
         check_should_not_none(order_type, "order_type")
         check_should_not_none(amount, "amount")
         check_should_not_none(source, "source")
 
-        if order_type == OrderType.SELL_LIMIT \
-                or order_type == OrderType.BUY_LIMIT \
-                or order_type == OrderType.BUY_LIMIT_MAKER \
-                or order_type == OrderType.SELL_LIMIT_MAKER:
+        if (
+            order_type == OrderType.SELL_LIMIT
+            or order_type == OrderType.BUY_LIMIT
+            or order_type == OrderType.BUY_LIMIT_MAKER
+            or order_type == OrderType.SELL_LIMIT_MAKER
+        ):
             check_should_not_none(price, "price")
         if order_type in [OrderType.SELL_MARKET, OrderType.BUY_MARKET]:
             price = None
@@ -357,13 +428,23 @@ class TradeClient(object):
             "source": source,
             "client-order-id": client_order_id,
             "stop-price": stop_price,
-            "operator": operator
+            "operator": operator,
         }
 
         return params
 
-    def create_order(self, symbol: str, account_id: 'int', order_type: 'OrderType', amount: 'float',
-                     price: 'float', source: str, client_order_id=None, stop_price=None, operator=None) -> int:
+    def create_order(
+        self,
+        symbol: str,
+        account_id: "int",
+        order_type: "OrderType",
+        amount: "float",
+        price: "float",
+        source: str,
+        client_order_id=None,
+        stop_price=None,
+        operator=None,
+    ) -> int:
         """
         Make an order in huobi.
 
@@ -384,53 +465,107 @@ class TradeClient(object):
         :return: The order id.
         """
 
-        params = self.create_order_param_check(symbol, account_id, order_type, amount,
-                                               price, source, client_order_id, stop_price, operator)
+        params = self.create_order_param_check(
+            symbol,
+            account_id,
+            order_type,
+            amount,
+            price,
+            source,
+            client_order_id,
+            stop_price,
+            operator,
+        )
         channel = "/v1/order/orders/place"
 
         return self.trade_client.request_process(HttpMethod.POST_SIGN, channel, params)
 
-    def create_spot_order(self, symbol: str, account_id: 'int', order_type: 'OrderType', amount: 'float',
-                          price: 'float', client_order_id=None, stop_price=None,
-                          operator=None) -> int:
+    def create_spot_order(
+        self,
+        symbol: str,
+        account_id: "int",
+        order_type: "OrderType",
+        amount: "float",
+        price: "float",
+        client_order_id=None,
+        stop_price=None,
+        operator=None,
+    ) -> int:
         order_source = OrderSource.API
-        return self.create_order(symbol=symbol, account_id=account_id, order_type=order_type, amount=amount,
-                                 price=price, source=order_source, client_order_id=client_order_id,
-                                 stop_price=stop_price,
-                                 operator=operator)
+        return self.create_order(
+            symbol=symbol,
+            account_id=account_id,
+            order_type=order_type,
+            amount=amount,
+            price=price,
+            source=order_source,
+            client_order_id=client_order_id,
+            stop_price=stop_price,
+            operator=operator,
+        )
 
-    def create_margin_order(self, symbol: str, account_id: 'int', order_type: 'OrderType', amount: 'float',
-                            price: 'float', client_order_id=None, stop_price=None,
-                            operator=None) -> int:
+    def create_margin_order(
+        self,
+        symbol: str,
+        account_id: "int",
+        order_type: "OrderType",
+        amount: "float",
+        price: "float",
+        client_order_id=None,
+        stop_price=None,
+        operator=None,
+    ) -> int:
         order_source = OrderSource.MARGIN_API
-        return self.create_order(symbol=symbol, account_id=account_id, order_type=order_type, amount=amount,
-                                 price=price, source=order_source, client_order_id=client_order_id,
-                                 stop_price=stop_price,
-                                 operator=operator)
+        return self.create_order(
+            symbol=symbol,
+            account_id=account_id,
+            order_type=order_type,
+            amount=amount,
+            price=price,
+            source=order_source,
+            client_order_id=client_order_id,
+            stop_price=stop_price,
+            operator=operator,
+        )
 
-    def create_super_margin_order(self, symbol: str, account_id: 'int', order_type: 'OrderType', amount: 'float',
-                                  price: 'float', client_order_id=None, stop_price=None,
-                                  operator=None) -> int:
+    def create_super_margin_order(
+        self,
+        symbol: str,
+        account_id: "int",
+        order_type: "OrderType",
+        amount: "float",
+        price: "float",
+        client_order_id=None,
+        stop_price=None,
+        operator=None,
+    ) -> int:
         order_source = OrderSource.SUPER_MARGIN_API
-        return self.create_order(symbol=symbol, account_id=account_id, order_type=order_type, amount=amount,
-                                 price=price, source=order_source, client_order_id=client_order_id,
-                                 stop_price=stop_price,
-                                 operator=operator)
+        return self.create_order(
+            symbol=symbol,
+            account_id=account_id,
+            order_type=order_type,
+            amount=amount,
+            price=price,
+            source=order_source,
+            client_order_id=client_order_id,
+            stop_price=stop_price,
+            operator=operator,
+        )
 
     def cancel_order(self, symbol, order_id):
         check_symbol(symbol)
         check_should_not_none(order_id, "order_id")
 
-        params = {
-            "order_id": order_id
-        }
+        params = {"order_id": order_id}
         order_id = params["order_id"]
 
         def get_channel():
             path = "/v1/order/orders/{}/submitcancel"
             return path.format(order_id)
 
-        return self.trade_client.request_process(HttpMethod.POST_SIGN, get_channel(), params)
+        return self.trade_client.request_process(
+            HttpMethod.POST_SIGN, get_channel(), params
+        )
 
     def cancel_orders(self, symbol, order_id_list):
         """
@@ -448,9 +583,7 @@ class TradeClient(object):
         for order_id in order_id_list:
             string_list.append(str(order_id))
 
-        params = {
-            "order-ids": string_list
-        }
+        params = {"order-ids": string_list}
         channel = "/v1/order/orders/batchcancel"
         return self.trade_client.request_process(HttpMethod.POST_SIGN, channel, params)
 
@@ -471,7 +604,7 @@ class TradeClient(object):
             "account-id": account_id,
             "symbol": symbols,
             "side": side,
-            "size": size
+            "size": size,
         }
         channel = "/v1/order/orders/batchCancelOpenOrders"
 
@@ -485,15 +618,14 @@ class TradeClient(object):
         """
         check_should_not_none(client_order_id, "client-order-id")
 
-        params = {
-            "client-order-id": client_order_id
-        }
+        params = {"client-order-id": client_order_id}
         channel = "/v1/order/orders/submitCancelClientOrder"
 
         return self.trade_client.request_process(HttpMethod.POST_SIGN, channel, params)
 
-    def transfer_between_futures_and_pro(self, currency: str, amount: 'float',
-                                         transfer_type: TransferFuturesPro) -> int:
+    def transfer_between_futures_and_pro(
+        self, currency: str, amount: "float", transfer_type: TransferFuturesPro
+    ) -> int:
         """
         Transfer Asset between Futures and Contract.
 
@@ -507,12 +639,7 @@ class TradeClient(object):
         check_should_not_none(currency, "currency")
         check_should_not_none(amount, "amount")
         check_should_not_none(transfer_type, "transfer_type")
-        params = {
-            "currency": currency,
-            "amount": amount,
-            "type": transfer_type
-
-        }
+        params = {"currency": currency, "amount": amount, "type": transfer_type}
         channel = "/v1/futures/transfer"
 
         return self.trade_client.request_process(HttpMethod.POST_SIGN, channel, params)
@@ -549,13 +676,16 @@ class TradeClient(object):
                 item.get("source", None),
                 item.get("client_order_id", None),
                 item.get("stop-price", None),
-                item.get("operator", None))
+                item.get("operator", None),
+            )
 
             new_config_list.append(new_item)
 
         channel = "/v1/order/batch-orders"
 
-        return self.trade_client.request_process_post_batch(HttpMethod.POST_SIGN, channel, new_config_list)
+        return self.trade_client.request_process_post_batch(
+            HttpMethod.POST_SIGN, channel, new_config_list
+        )
 
     def sub_trade_clearing(self, symbols: str, callback, error_handler=None):
         """
@@ -587,4 +717,6 @@ class TradeClient(object):
                 connection.send(trade_clearing_channel(symbol))
                 time.sleep(0.01)
 
-        return self.trade_client_socket_sub.execute_subscribe_v2(subscription, callback, error_handler, is_trade=True)
+        return self.trade_client_socket_sub.execute_subscribe_v2(
+            subscription, callback, error_handler, is_trade=True
+        )

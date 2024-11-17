@@ -8,19 +8,19 @@ from funsecret import read_secret
 
 async def main():
     d = {
-        'newUpdates': False,
-        'apiKey': read_secret('coin', 'binance', 'api_key'),
-        'secretKey': read_secret('coin', 'binance', 'secret_key')
+        "newUpdates": False,
+        "apiKey": read_secret("coin", "binance", "api_key"),
+        "secretKey": read_secret("coin", "binance", "secret_key"),
     }
     exchange = ccxtpro.binance(d)
-    await exchange.watch_trades('BTC/BUSD')
-    await exchange.watch_trades('ETC/BUSD')
+    await exchange.watch_trades("BTC/BUSD")
+    await exchange.watch_trades("ETC/BUSD")
     while True:
         try:
             trades = exchange.trades
             # trades = await exchange.watch_trades('BTC/USDT')
-            print((1, len(trades['BTC/BUSD']), len(trades['ETC/BUSD'])))
-            print(trades['BTC/BUSD'][-1])
+            print((1, len(trades["BTC/BUSD"]), len(trades["ETC/BUSD"])))
+            print(trades["BTC/BUSD"][-1])
             # orderbook = await exchange.watch_ohlcv('BTC/USD')
             # orderbook = await exchange.watch_orders()
 
@@ -35,4 +35,4 @@ async def main():
 
 
 run(main())
-print('3232')
+print("3232")

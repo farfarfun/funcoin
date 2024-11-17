@@ -10,12 +10,14 @@ from funcoin.huobi.utils.huobi_api_exception import HuobiApiException
 
 
 def utc_now():
-    return datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+    return datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
 
 
 def create_signature(api_key, secret_key, method, url, builder):
     if api_key is None or secret_key is None or api_key == "" or secret_key == "":
-        raise HuobiApiException(HuobiApiException.KEY_MISSING,  "API key and secret key are required")
+        raise HuobiApiException(
+            HuobiApiException.KEY_MISSING, "API key and secret key are required"
+        )
 
     timestamp = utc_now()
     builder.put_url("AccessKeyId", api_key)
@@ -29,10 +31,16 @@ def create_signature(api_key, secret_key, method, url, builder):
     # 对参数进行排序:
     keys = sorted(builder.param_map.keys())
     # 加入&
-    qs0 = '&'.join(['%s=%s' % (key, parse.quote(builder.param_map[key], safe='')) for key in keys])
+    qs0 = "&".join(
+        ["%s=%s" % (key, parse.quote(builder.param_map[key], safe="")) for key in keys]
+    )
     # 请求方法，域名，路径，参数 后加入`\n`
-    payload0 = '%s\n%s\n%s\n%s' % (method, host, path, qs0)
-    dig = hmac.new(secret_key.encode('utf-8'), msg=payload0.encode('utf-8'), digestmod=hashlib.sha256).digest()
+    payload0 = "%s\n%s\n%s\n%s" % (method, host, path, qs0)
+    dig = hmac.new(
+        secret_key.encode("utf-8"),
+        msg=payload0.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
     # 进行base64编码
     s = base64.b64encode(dig).decode()
     builder.put_url("Signature", s)
@@ -40,7 +48,9 @@ def create_signature(api_key, secret_key, method, url, builder):
 
 def create_signature_v2(api_key, secret_key, method, url, builder):
     if api_key is None or secret_key is None or api_key == "" or secret_key == "":
-        raise HuobiApiException(HuobiApiException.KEY_MISSING,  "API key and secret key are required")
+        raise HuobiApiException(
+            HuobiApiException.KEY_MISSING, "API key and secret key are required"
+        )
 
     timestamp = utc_now()
     builder.put_url("accessKey", api_key)
@@ -54,10 +64,16 @@ def create_signature_v2(api_key, secret_key, method, url, builder):
     # 对参数进行排序:
     keys = sorted(builder.param_map.keys())
     # 加入&
-    qs0 = '&'.join(['%s=%s' % (key, parse.quote(builder.param_map[key], safe='')) for key in keys])
+    qs0 = "&".join(
+        ["%s=%s" % (key, parse.quote(builder.param_map[key], safe="")) for key in keys]
+    )
     # 请求方法，域名，路径，参数 后加入`\n`
-    payload0 = '%s\n%s\n%s\n%s' % (method, host, path, qs0)
-    dig = hmac.new(secret_key.encode('utf-8'), msg=payload0.encode('utf-8'), digestmod=hashlib.sha256).digest()
+    payload0 = "%s\n%s\n%s\n%s" % (method, host, path, qs0)
+    dig = hmac.new(
+        secret_key.encode("utf-8"),
+        msg=payload0.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
     # 进行base64编码
     s = base64.b64encode(dig).decode()
     builder.put_url("signature", s)
@@ -69,7 +85,7 @@ def create_signature_v2(api_key, secret_key, method, url, builder):
         "signatureMethod": "HmacSHA256",
         "timestamp": timestamp,
         "signature": s,
-        "authType": "api"
+        "authType": "api",
     }
 
     builder.put_url("action", "req")

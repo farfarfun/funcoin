@@ -13,10 +13,10 @@ class BaseHandle:
     def solve(self, data) -> bool:
         data = eval(data)
 
-        if 'event' in data:
+        if "event" in data:
             return False
 
-        channel = data['arg']['channel']
+        channel = data["arg"]["channel"]
         if len(self.channels) == 0 or channel in self.channels:
             return self.handle(data)
 
@@ -28,11 +28,11 @@ class BaseHandle:
 class PublicTickers(BaseHandle):
     def __init__(self, *args, **kwargs):
         create_all()
-        super(PublicTickers, self).__init__(channels=['tickers'], *args, **kwargs)
+        super(PublicTickers, self).__init__(channels=["tickers"], *args, **kwargs)
 
     def handle(self, data) -> bool:
         try:
-            for arg in data['data']:
+            for arg in data["data"]:
                 self.session.merge(OkexSocketPublicTickers(**arg))
                 self.session.commit()
         except Exception as e:
@@ -49,10 +49,7 @@ class ResponseHandel(BaseHandle):
 
     def handle(self, data) -> bool:
         try:
-            res = {
-                "channel": data['arg']['channel'],
-                "response": str(data)
-            }
+            res = {"channel": data["arg"]["channel"], "response": str(data)}
             self.session.merge(OkexSocketPublicTickers(**res))
             self.session.commit()
         except Exception as e:

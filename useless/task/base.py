@@ -19,10 +19,15 @@ class BaseTask(BaseTable):
         self.table_name = "base"
 
     def load(self):
-        return pd.read_sql(sql=f"select * from {self.table_name}", con=self.engine.connect())
+        return pd.read_sql(
+            sql=f"select * from {self.table_name}", con=self.engine.connect()
+        )
 
     def current_price(self, symbol="ETH/USDT"):
-        data = self.exchange.fetch_ohlcv(symbol, since=int((datetime.now() + timedelta(minutes=-1)).timestamp() * 1000))
+        data = self.exchange.fetch_ohlcv(
+            symbol,
+            since=int((datetime.now() + timedelta(minutes=-1)).timestamp() * 1000),
+        )
         if len(data) > 0:
             return data[-1][2]
         else:
@@ -50,7 +55,9 @@ class AccountTask(BaseTask):
             return self.current_price(f"{data['symbol']}/BUSD")
 
         account["price"] = account[["symbol", "total"]].apply(fun, axis=1)
-        account.to_sql(name=self.table_name, con=conn or self.engine.connect(), if_exists="replace")
+        account.to_sql(
+            name=self.table_name, con=conn or self.engine.connect(), if_exists="replace"
+        )
 
 
 class MarketTask(BaseTask):
@@ -61,8 +68,15 @@ class MarketTask(BaseTask):
 
     def refresh(self, conn=None):
         self.exchange.load_markets()
-        df = pd.DataFrame([dict((k, str(v)) for k, v in symbol.items()) for symbol in self.exchange.markets.values()])
-        df.to_sql(name=self.table_name, con=conn or self.engine.connect(), if_exists="replace")
+        df = pd.DataFrame(
+            [
+                dict((k, str(v)) for k, v in symbol.items())
+                for symbol in self.exchange.markets.values()
+            ]
+        )
+        df.to_sql(
+            name=self.table_name, con=conn or self.engine.connect(), if_exists="replace"
+        )
 
 
 class Ticker24HTask(BaseTask):
@@ -75,4 +89,9 @@ class Ticker24HTask(BaseTask):
         param = {"type": "MINI"}
         df = pd.DataFrame(self.exchange.public_get_ticker_24hr(param))
         dtype = {"volume": DOUBLE, "quoteVolume": DOUBLE}
-        df.to_sql(name=self.table_name, con=conn or self.engine.connect(), if_exists="replace", dtype=dtype)
+        df.to_sql(
+            name=self.table_name,
+            con=conn or self.engine.connect(),
+            if_exists="replace",
+            dtype=dtype,
+        )

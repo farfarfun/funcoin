@@ -12,8 +12,12 @@ from funcoin.okex.websocket.handle import PublicTickers, ResponseHandel
 
 
 class WebsocketService(APIRouter):
-    def __init__(self, connect: BaseConnect = None, prefix='/websocket', *args, **kwargs):
-        self.connect = connect or PublicConnect(channels=[PublicChannel.public_tickers().to_json()])
+    def __init__(
+        self, connect: BaseConnect = None, prefix="/websocket", *args, **kwargs
+    ):
+        self.connect = connect or PublicConnect(
+            channels=[PublicChannel.public_tickers().to_json()]
+        )
         self.connect.add_handle(PublicTickers())
         self.connect.add_handle(ResponseHandel())
         self.session = create_session()
@@ -24,24 +28,28 @@ class WebsocketService(APIRouter):
         self.connect.run()
 
     def update_channels_db(self):
-        details = self.session.query(OkexClientAccountBalance).filter(OkexClientAccountBalance.eqUsd > 10).all()
+        details = (
+            self.session.query(OkexClientAccountBalance)
+            .filter(OkexClientAccountBalance.eqUsd > 10)
+            .all()
+        )
 
         for _detail in details:
             detail = _detail.json()
-            if detail['ccy'] == 'USDT':
+            if detail["ccy"] == "USDT":
                 continue
             instId = f"{detail['ccy']}-USDT"
             param = {
                 "channel_json": str(PublicChannel.public_tickers(instId).to_json()),
                 "channel": "tickers",
-                "instId": instId
+                "instId": instId,
             }
             self.session.merge(OkexWebsocketChannels(**param))
         create_all()
         self.session.commit()
         return {"update_db": len(details)}
 
-    @api_route('/update/channel', description="get value")
+    @api_route("/update/channel", description="get value")
     def update_channels(self):
         try:
             res = self.update_channels_db()
@@ -54,16 +62,18 @@ class WebsocketService(APIRouter):
             old_channels_str = [str(channel) for channel in self.connect.channels]
 
             if new_channels_str is not None and len(new_channels_str) > 0:
-                if len(list(set(old_channels_str) - set(new_channels_str))) > 0 or len(
-                        list(set(new_channels_str) - set(old_channels_str))) > 0:
+                if (
+                    len(list(set(old_channels_str) - set(new_channels_str))) > 0
+                    or len(list(set(new_channels_str) - set(old_channels_str))) > 0
+                ):
                     logging.info(f"old:{old_channels_str},new:{new_channels_str}")
                     self.connect.channels = new_channels
                     self.connect.subscribe_restart()
-                    res['subscribe'] = 'restart'
+                    res["subscribe"] = "restart"
 
             res["channels_size"] = len(self.connect.channels)
             res["update"] = "success"
-            res['inst_list'] = inst_list
+            res["inst_list"] = inst_list
         except Exception as e:
             self.session.rollback()
             res["update"] = "failed"

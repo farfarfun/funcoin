@@ -50,7 +50,9 @@ class BaseLoader:
         if len(self.cache_data) == 0:
             return
         df = pd.DataFrame(self.cache_data)
-        df = df[(df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)]
+        df = df[
+            (df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)
+        ]
         self._write(orjson.loads(df.to_json(orient="records")))
         self.cache_data.clear()
 
@@ -71,7 +73,9 @@ class CSVLoader(BaseLoader):
         self.csv_path = csv_path
         super().__init__(*args, **kwargs)
         self.csv_file = open(self.csv_path, mode="w")
-        self.csv_writer = csv.DictWriter(self.csv_file, delimiter=",", fieldnames=fieldnames)
+        self.csv_writer = csv.DictWriter(
+            self.csv_file, delimiter=",", fieldnames=fieldnames
+        )
         self.csv_writer.writeheader()
 
     def _write(self, data_list):
@@ -112,12 +116,16 @@ class KlineLoder(CCXTBaseLoader):
             if unix_temp >= self.unix_end:
                 break
             try:
-                result = self.exchange.fetch_ohlcv(symbol, self.timeframe, unix_temp, limit=500)
+                result = self.exchange.fetch_ohlcv(
+                    symbol, self.timeframe, unix_temp, limit=500
+                )
                 result = self.exchange.sort_by(result, 0)
                 if len(result) == 0:
                     break
                 unix_temp = result[-1][0]
-                df = pd.DataFrame(result, columns=["timestamp", "open", "close", "low", "high", "vol"])
+                df = pd.DataFrame(
+                    result, columns=["timestamp", "open", "close", "low", "high", "vol"]
+                )
                 df["symbol"] = symbol
                 self.write_data(orjson.loads(df.to_json(orient="records")))
                 # time.sleep(int(self.exchange.rateLimit / 1000))

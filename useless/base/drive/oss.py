@@ -17,7 +17,9 @@ def get_bucket():
         access_key_secret=read_secret("aliyun", "oss", "access_key_secret"),
     )
     bucket = oss2.Bucket(
-        auth, endpoint=read_secret("aliyun", "oss", "endpoint"), bucket_name=read_secret("aliyun", "oss", "bucket")
+        auth,
+        endpoint=read_secret("aliyun", "oss", "endpoint"),
+        bucket_name=read_secret("aliyun", "oss", "bucket"),
     )
 
 

@@ -11,7 +11,6 @@ from funsecret import read_secret
 
 
 class Strategy2Task(BaseTask):
-
     def __init__(self, *args, **kwargs):
         super(Strategy2Task, self).__init__(*args, **kwargs)
         self.table = StrategyTable(db_suffix=self.exchange.name)
@@ -25,23 +24,26 @@ class Strategy2Task(BaseTask):
     def update_account(self):
         with self.engine.connect() as conn:
             self.account_task.refresh(conn=conn)
-            account = pd.read_sql(sql=f"select * from {AccountTask.table_name}", con=conn)
-            for symbol in json.loads(account.to_json(orient='records')):
-                if symbol['symbol'] == 'BUSD':
-                    self.residue = symbol['free']
+            account = pd.read_sql(
+                sql=f"select * from {AccountTask.table_name}", con=conn
+            )
+            for symbol in json.loads(account.to_json(orient="records")):
+                if symbol["symbol"] == "BUSD":
+                    self.residue = symbol["free"]
                     break
-            self.strategy_df = pd.read_sql(f"select * from {self.table.table_name} where status=2", con=conn)
+            self.strategy_df = pd.read_sql(
+                f"select * from {self.table.table_name} where status=2", con=conn
+            )
         time.sleep(1)
 
     async def buy_auto(self, price_map):
-
         if self.residue < 12:
             return
-        data = self.exchange.fetch_ohlcv(symbol='BTC/BUSD', timeframe='1m', limit=60)
+        data = self.exchange.fetch_ohlcv(symbol="BTC/BUSD", timeframe="1m", limit=60)
         df = pd.DataFrame(data)
-        df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        df.sort_values('timestamp', ascending=False)
-        opens = df['open'].values
+        df.columns = ["timestamp", "open", "high", "low", "close", "volume"]
+        df.sort_values("timestamp", ascending=False)
+        opens = df["open"].values
         if opens[7] < opens[1]:
             return
 
@@ -53,30 +55,30 @@ class Strategy2Task(BaseTask):
 
     async def sell_auto(self, price_map):
         print(price_map)
-        for row in json.loads(self.strategy_df.to_json(orient='records')):
+        for row in json.loads(self.strategy_df.to_json(orient="records")):
             try:
-                symbol = row['symbol']
+                symbol = row["symbol"]
                 if symbol not in price_map.keys():
                     continue
                 price = price_map[symbol]
 
-                buy_info = json.loads(row['buy_json'])
-                buy_price = buy_info['price']
-                amount = buy_info['amount']
-                timestamp = buy_info['timestamp']
+                buy_info = json.loads(row["buy_json"])
+                buy_price = buy_info["price"]
+                amount = buy_info["amount"]
+                timestamp = buy_info["timestamp"]
                 pct = price / buy_price
                 if pct > 1.0006:
-                    self.sell_market(row['id'], symbol, amount)
+                    self.sell_market(row["id"], symbol, amount)
                 elif pct > 1.0005:
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0005)
+                    self.sell_limit(row["id"], symbol, amount, buy_price * 1.0005)
                 elif pct > 1.0004:
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.0004)
+                    self.sell_limit(row["id"], symbol, amount, buy_price * 1.0004)
                 elif time.time() * 1000 - timestamp > 10 * 60 * 1000 and pct > 1.0001:
-                    self.sell_limit(row['id'], symbol, amount, buy_price * 1.00005)
+                    self.sell_limit(row["id"], symbol, amount, buy_price * 1.00005)
                 elif time.time() * 1000 - timestamp > 30 * 60 * 1000 and pct >= 0.99999:
-                    self.sell_market(row['id'], symbol, amount)
+                    self.sell_market(row["id"], symbol, amount)
                 elif time.time() * 1000 - timestamp > 120 * 60 * 1000:
-                    self.sell_market(row['id'], symbol, amount)
+                    self.sell_market(row["id"], symbol, amount)
                 else:
                     continue
                 logger.info(f"sell {buy_price} vs {price}")
@@ -88,7 +90,7 @@ class Strategy2Task(BaseTask):
         if price == 0:
             return
         amount = dollar / price
-        buy_json = self.exchange.create_order(symbol, 'market', 'buy', amount)
+        buy_json = self.exchange.create_order(symbol, "market", "buy", amount)
         value = {
             "status": 2,
             "ext_json": {},
@@ -103,7 +105,7 @@ class Strategy2Task(BaseTask):
         logger.info(f"sell {symbol}")
 
         try:
-            sell_json = self.exchange.create_order(symbol, 'market', 'sell', amount)
+            sell_json = self.exchange.create_order(symbol, "market", "sell", amount)
         except Exception as e:
             sell_json = {}
         value = {
@@ -118,7 +120,9 @@ class Strategy2Task(BaseTask):
         logger.info(f"sell {symbol}")
 
         try:
-            sell_json = self.exchange.create_order(symbol, 'limit', 'sell', amount, price=price)
+            sell_json = self.exchange.create_order(
+                symbol, "limit", "sell", amount, price=price
+            )
         except Exception as e:
             sell_json = {}
         value = {
@@ -128,11 +132,11 @@ class Strategy2Task(BaseTask):
         }
         self.table.upsert(value=value)
 
-    async def watch_symbol(self, symbol='BTC/BUSD', amount=0.0015):
+    async def watch_symbol(self, symbol="BTC/BUSD", amount=0.0015):
         d = {
-            'newUpdates': False,
-            'apiKey': read_secret('coin', 'binance', 'api_key'),
-            'secretKey': read_secret('coin', 'binance', 'secret_key')
+            "newUpdates": False,
+            "apiKey": read_secret("coin", "binance", "api_key"),
+            "secretKey": read_secret("coin", "binance", "secret_key"),
         }
         exchange = ccxtpro.binance(d)
         await exchange.watch_trades(symbol)
@@ -143,7 +147,7 @@ class Strategy2Task(BaseTask):
                 trades = exchange.trades
                 price_map = {}
                 for sym in trades.keys():
-                    price_map[sym] = float(trades[sym][-1]['info']['p'])
+                    price_map[sym] = float(trades[sym][-1]["info"]["p"])
                 self.update_account()
                 await self.buy_auto(price_map)
                 await self.sell_auto(price_map)
@@ -153,5 +157,6 @@ class Strategy2Task(BaseTask):
 
     def run_job(self):
         run(self.watch_symbol())
+
 
 # Strategy2Task().run_job()

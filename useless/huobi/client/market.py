@@ -1,20 +1,24 @@
 import json
 import time
 
-from funcoin.huobi.connection import (RestApiSyncClient, SubscribeClient,
-                                       WebSocketReqClient)
-from funcoin.huobi.constant import (CandlestickInterval, DepthStep,
-                                     HttpMethod, MbpLevel)
+from funcoin.huobi.connection import (
+    RestApiSyncClient,
+    SubscribeClient,
+    WebSocketReqClient,
+)
+from funcoin.huobi.constant import CandlestickInterval, DepthStep, HttpMethod, MbpLevel
 from funcoin.huobi.utils import get_current_timestamp
-from funcoin.huobi.utils.input_checker import (check_in_list, check_range,
-                                                check_should_not_none,
-                                                check_symbol,
-                                                check_symbol_list)
+from funcoin.huobi.utils.input_checker import (
+    check_in_list,
+    check_range,
+    check_should_not_none,
+    check_symbol,
+    check_symbol_list,
+)
 from funcoin.huobi.utils.model import Response
 
 
 class MarketClient(object):
-
     def __init__(self, *args, **kwargs):
         """
         Create the request client instance.
@@ -42,15 +46,13 @@ class MarketClient(object):
         check_should_not_none(period, "period")
         check_range(size, 1, 2000, "size")
 
-        params = {
-            "symbol": symbol,
-            "period": period,
-            "size": size
-        }
+        params = {"symbol": symbol, "period": period, "size": size}
         channel = "/market/history/kline"
         return self.market_service.request_process(HttpMethod.GET, channel, params)
 
-    def sub_candlestick(self, symbols: str, interval: CandlestickInterval, callback, error_handler):
+    def sub_candlestick(
+        self, symbols: str, interval: CandlestickInterval, callback, error_handler
+    ):
         """
         Subscribe candlestick/kline event. If the candlestick/kline is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -83,10 +85,19 @@ class MarketClient(object):
                 connection.send(kline_channel(symbol, interval))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
-    def req_candlestick(self, symbols: str, interval: CandlestickInterval, callback,
-                        from_ts_second=None, end_ts_second=None, error_handler=None):
+    def req_candlestick(
+        self,
+        symbols: str,
+        interval: CandlestickInterval,
+        callback,
+        from_ts_second=None,
+        end_ts_second=None,
+        error_handler=None,
+    ):
         """
         Subscribe candlestick/kline event. If the candlestick/kline is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -110,7 +121,9 @@ class MarketClient(object):
         check_should_not_none(interval, "interval")
         check_should_not_none(callback, "callback")
 
-        def request_kline_channel(symbol, _interval, _from_ts_second=None, to_ts_second=None):
+        def request_kline_channel(
+            symbol, _interval, _from_ts_second=None, to_ts_second=None
+        ):
             channel = dict()
             channel["req"] = "market." + symbol + ".kline." + _interval
             channel["id"] = str(get_current_timestamp())
@@ -122,10 +135,16 @@ class MarketClient(object):
 
         def subscription(connection):
             for symbol in symbol_list:
-                connection.send(request_kline_channel(symbol, interval, from_ts_second, end_ts_second))
+                connection.send(
+                    request_kline_channel(
+                        symbol, interval, from_ts_second, end_ts_second
+                    )
+                )
                 time.sleep(0.01)
 
-        self.market_service_socket.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_socket.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def get_price_depth(self, symbol: str, depth_type: str, depth_size: int = None):
         """
@@ -142,8 +161,18 @@ class MarketClient(object):
         channel = "/market/depth"
 
         check_symbol(symbol)
-        check_in_list(depth_type, [DepthStep.STEP0, DepthStep.STEP1, DepthStep.STEP2, DepthStep.STEP3, DepthStep.STEP4,
-                                   DepthStep.STEP5], "depth_type")
+        check_in_list(
+            depth_type,
+            [
+                DepthStep.STEP0,
+                DepthStep.STEP1,
+                DepthStep.STEP2,
+                DepthStep.STEP3,
+                DepthStep.STEP4,
+                DepthStep.STEP5,
+            ],
+            "depth_type",
+        )
         params = {
             "symbol": symbol,
             "type": depth_type,
@@ -163,7 +192,14 @@ class MarketClient(object):
 
     @staticmethod
     def get_depth_step_list():
-        return [DepthStep.STEP0, DepthStep.STEP1, DepthStep.STEP2, DepthStep.STEP3, DepthStep.STEP4, DepthStep.STEP5]
+        return [
+            DepthStep.STEP0,
+            DepthStep.STEP1,
+            DepthStep.STEP2,
+            DepthStep.STEP3,
+            DepthStep.STEP4,
+            DepthStep.STEP5,
+        ]
 
     @staticmethod
     def get_valid_depth_step(value, defalut_value):
@@ -173,7 +209,9 @@ class MarketClient(object):
         else:
             return defalut_value
 
-    def sub_price_depth(self, symbols: str, depth_step: str, callback, error_handler=None):
+    def sub_price_depth(
+        self, symbols: str, depth_step: str, callback, error_handler=None
+    ):
         """
         Subscribe price depth event. If the price depth is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -192,7 +230,9 @@ class MarketClient(object):
         """
         symbol_list = symbols.split(",")
         check_symbol_list(symbol_list)
-        step = MarketClient.get_valid_depth_step(value=depth_step, defalut_value=DepthStep.STEP0)
+        step = MarketClient.get_valid_depth_step(
+            value=depth_step, defalut_value=DepthStep.STEP0
+        )
         check_should_not_none(callback, "callback")
 
         def price_depth_channel(symbol, step_type=DepthStep.STEP0):
@@ -206,7 +246,9 @@ class MarketClient(object):
                 connection.send(price_depth_channel(symbol, step))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def sub_price_depth_bbo(self, symbols: str, callback, error_handler=None):
         """
@@ -239,9 +281,13 @@ class MarketClient(object):
                 connection.send(price_depth_bbo_channel(symbol))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
-    def req_price_depth(self, symbols: str, depth_step: str, callback, error_handler=None):
+    def req_price_depth(
+        self, symbols: str, depth_step: str, callback, error_handler=None
+    ):
         """
         Subscribe price depth event. If the price depth is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -260,7 +306,9 @@ class MarketClient(object):
         """
         symbol_list = symbols.split(",")
         check_symbol_list(symbol_list)
-        step = MarketClient.get_valid_depth_step(value=depth_step, defalut_value=DepthStep.STEP0)
+        step = MarketClient.get_valid_depth_step(
+            value=depth_step, defalut_value=DepthStep.STEP0
+        )
         check_should_not_none(callback, "callback")
 
         def request_price_depth_channel(symbol, step_type="step0"):
@@ -274,7 +322,9 @@ class MarketClient(object):
                 connection.send(request_price_depth_channel(symbol, step))
                 time.sleep(0.01)
 
-        self.market_service_socket.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_socket.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def get_market_detail(self, symbol: str):
         """
@@ -323,7 +373,9 @@ class MarketClient(object):
                 connection.send(market_detail_channel(symbol))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def req_market_detail(self, symbols: str, callback, error_handler=None):
         """
@@ -355,7 +407,9 @@ class MarketClient(object):
                 connection.send(request_market_detail_channel(symbol))
                 time.sleep(0.01)
 
-        self.market_service_socket.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_socket.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def get_market_trade(self, symbol: str) -> list:
         """
@@ -374,7 +428,7 @@ class MarketClient(object):
 
         return self.market_service.request_process(HttpMethod.GET, channel, params)
 
-    def get_history_trade(self, symbol: str, size: 'int' = None) -> list:
+    def get_history_trade(self, symbol: str, size: "int" = None) -> list:
         """
         Get the most recent trades with their price, volume and direction.
 
@@ -387,10 +441,7 @@ class MarketClient(object):
         check_symbol(symbol)
         check_range(size, 1, 2000, "size")
 
-        params = {
-            "symbol": symbol,
-            "size": size
-        }
+        params = {"symbol": symbol, "size": size}
 
         return self.market_service.request_process(HttpMethod.GET, channel, params)
 
@@ -424,7 +475,9 @@ class MarketClient(object):
                 connection.send(trade_detail_channel(symbol))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def req_trade_detail(self, symbols: str, callback, error_handler=None):
         """
@@ -456,13 +509,13 @@ class MarketClient(object):
                 connection.send(request_trade_detail_channel(symbol))
                 time.sleep(0.01)
 
-        self.market_service_socket.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_socket.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
     def get_market_detail_merged(self, symbol):
         check_symbol(symbol)
-        params = {
-            "symbol": symbol
-        }
+        params = {"symbol": symbol}
         channel = "/market/detail/merged"
         return self.market_service.request_process(HttpMethod.GET, channel, params)
 
@@ -481,7 +534,9 @@ class MarketClient(object):
     increase mbp(market by price)
     """
 
-    def sub_mbp_increase(self, symbols: str, levels: 'int', callback, error_handler=None):
+    def sub_mbp_increase(
+        self, symbols: str, levels: "int", callback, error_handler=None
+    ):
         """
         Subscribe mbp event. If the mbp is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -506,7 +561,9 @@ class MarketClient(object):
 
         def mbp_increase_channel(symbol, level):
             channel = dict()
-            channel["sub"] = "market.{symbol}.mbp.{level}".format(symbol=symbol, level=level)
+            channel["sub"] = "market.{symbol}.mbp.{level}".format(
+                symbol=symbol, level=level
+            )
             channel["id"] = str(get_current_timestamp())
             return json.dumps(channel)
 
@@ -515,13 +572,15 @@ class MarketClient(object):
                 connection.send(mbp_increase_channel(symbol, levels))
                 time.sleep(0.01)
 
-        return self.market_service_sub.execute_subscribe_mbp(subscription, callback, error_handler)
+        return self.market_service_sub.execute_subscribe_mbp(
+            subscription, callback, error_handler
+        )
 
     """
     subscribe full mbp(market by price)
     """
 
-    def sub_mbp_full(self, symbols: str, levels: 'int', callback, error_handler=None):
+    def sub_mbp_full(self, symbols: str, levels: "int", callback, error_handler=None):
         """
         Subscribe full mbp event. If the mbp is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -547,7 +606,9 @@ class MarketClient(object):
 
         def mbp_full_channel(symbol, level):
             channel = dict()
-            channel["sub"] = "market.{symbol}.mbp.refresh.{level}".format(symbol=symbol, level=level)
+            channel["sub"] = "market.{symbol}.mbp.refresh.{level}".format(
+                symbol=symbol, level=level
+            )
             channel["id"] = str(get_current_timestamp())
             return json.dumps(channel)
 
@@ -556,9 +617,13 @@ class MarketClient(object):
                 connection.send(mbp_full_channel(symbol, levels))
                 time.sleep(0.01)
 
-        self.market_service_sub.execute_subscribe_v1(subscription, callback, error_handler)
+        self.market_service_sub.execute_subscribe_v1(
+            subscription, callback, error_handler
+        )
 
-    def req_mbp(self, symbols: str, levels: 'int', callback, auto_close=True, error_handler=None):
+    def req_mbp(
+        self, symbols: str, levels: "int", callback, auto_close=True, error_handler=None
+    ):
         """
         Subscribe mbp event. If the mbp is updated,
         server will send the data to client and onReceive in callback will be called.
@@ -584,7 +649,9 @@ class MarketClient(object):
 
         def request_mbp_channel(symbol, level):
             channel = dict()
-            channel["req"] = "market.{symbol}.mbp.{level}".format(symbol=symbol, level=level)
+            channel["req"] = "market.{symbol}.mbp.{level}".format(
+                symbol=symbol, level=level
+            )
             channel["id"] = str(get_current_timestamp())
             return json.dumps(channel)
 
@@ -593,4 +660,6 @@ class MarketClient(object):
                 connection.send(request_mbp_channel(symbol, levels))
                 time.sleep(0.01)
 
-        self.market_service_socket.execute_subscribe_mbp(subscription, callback, error_handler)
+        self.market_service_socket.execute_subscribe_mbp(
+            subscription, callback, error_handler
+        )
