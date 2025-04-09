@@ -466,7 +466,7 @@ def load_daily_all(
     )
     file_path = os.path.join(
         download_dir,
-        f'{history.data_type}_{history.type}_{period}-{date.strftime("%Y%m%d")}.csv',
+        f"{history.data_type}_{history.type}_{period}-{date.strftime('%Y%m%d')}.csv",
     )
     if os.path.exists(file_path) and not overwrite:
         return file_path

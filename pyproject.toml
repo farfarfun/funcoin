@@ -1,14 +1,34 @@
 [project]
 name = "funcoin"
-version = "1.0.49"
-description = "Add your description here"
+version = "1.0.50"
+description = "funcoin"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [ "ccxt>=4.4.18", "farfundb>=1.2.3", "funbuild>=1.5.19", "fundrive-alipan>=1.2.9", "funfile>=1.0.6", "funsecret>=1.4.2", "funserver>=1.0.38", "funtable>=1.0.1", "orjson>=3.10.10",]
 [[project.authors]]
-name = "farfun"
+name = "牛哥"
+email = "niuliangtao@qq.com"
+
+[[project.authors]]
+name = "farfarfun"
+email = "farfarfun@qq.com"
+
+[[project.maintainers]]
+name = "牛哥"
+email = "niuliangtao@qq.com"
+
+[[project.maintainers]]
+name = "farfarfun"
 email = "farfarfun@qq.com"
 
 [project.scripts]
 funcoin = "funcoin.server.run:funcoin"
 funcoin-download = "funcoin.server.download:funcoin_download"
+
+[project.urls]
+Organization = "https://github.com/farfarfun"
+Repository = "https://github.com/farfarfun/funcoin"
+Releases = "https://github.com/farfarfun/funcoin/releases"
+
+[tool.setuptools]
+license-files = []

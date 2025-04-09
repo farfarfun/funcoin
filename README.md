@@ -1,5 +1,1 @@
-# funcoin
-
-```bash
-pip install funcoin
-```
+Your version of Cursor is outdated, and unfortunately no longer supported. Please upgrade to the latest version by quitting and re-opening the Cursor app.
