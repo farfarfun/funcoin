@@ -1,5 +1,5 @@
 import ccxt
-from fundrive import OSSDrive
+from fundrive.drives import OSSDrive
 from funsecret import read_secret
 from funtable.table import DriveTable
 
