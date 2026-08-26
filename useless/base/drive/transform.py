@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-from funsecret import read_secret
+from nltsecret import read_secret
 
 try:
     from mysql_to_sqlite3.cli import MySQLtoSQLite

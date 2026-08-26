@@ -1,4 +1,4 @@
-from funsecret import read_secret
+from nltsecret import read_secret
 from fundb.sqlalchemy import BaseTable as BaseTable2
 from fundb.sqlalchemy import create_engine
 

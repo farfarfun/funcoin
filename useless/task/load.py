@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from ccxt import binance
-from funsecret import read_secret
+from nltsecret import read_secret
 
 from funcoin.coins.base.file import DataFileProperty
 from funcoin.task import BaseTask

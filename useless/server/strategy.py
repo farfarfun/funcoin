@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from funsecret import read_secret
-from funbuild.tool.fastapi import add_api_routes, api_route
+from nltsecret import read_secret
+from nltbuild.tool.fastapi import add_api_routes, api_route
 from funcoin.strategy.binance import Strategy
 
 path_root = (

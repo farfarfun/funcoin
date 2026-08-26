@@ -4,7 +4,7 @@ from ccxt import binance
 from fastapi import APIRouter
 from darkbuild.tool.fastapi import add_api_routes, api_route
 from funcoin.coins.base.file import DataFileProperty
-from funsecret import read_secret
+from nltsecret import read_secret
 
 path_root = (
     read_secret(cate1="funcoin", cate2="path", cate3="local", cate4="path_root")

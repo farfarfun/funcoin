@@ -1,4 +1,4 @@
-from funbuild.shell import run_shell_list
+from funshell import run_shell_list
 from funcoin.coins.task.download import download_daily
 from funserver.base import BaseServer, server_parser
 

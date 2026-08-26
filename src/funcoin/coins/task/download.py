@@ -1,6 +1,6 @@
 import ccxt
 from fundrive import OSSDrive
-from funsecret import read_secret
+from nltsecret import read_secret
 from funtable import DriveTable
 
 from funcoin.coins.table.load import LoadTask
