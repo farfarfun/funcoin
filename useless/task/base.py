@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import ccxt
 import pandas as pd
 from funcoin.base.db import BaseTable
-from nltsecret import read_secret
+from funsecret import read_secret
 from sqlalchemy import DOUBLE
 
 

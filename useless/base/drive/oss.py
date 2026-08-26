@@ -1,8 +1,8 @@
 import os.path
 
 import oss2
-from nltfile.compress import tarfile
-from nltsecret import read_secret
+from funfile.compress import tarfile
+from funsecret import read_secret
 
 global bucket
 bucket = None
