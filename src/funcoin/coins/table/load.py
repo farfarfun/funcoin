@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import ccxt
 import funutil
 from funfile.compress import tarfile
-from funtable import DriveTable
+from funtable.table import DriveTable
 
 from funcoin.coins.base.loader import BaseLoader, KlineLoder, TradeLoader
 

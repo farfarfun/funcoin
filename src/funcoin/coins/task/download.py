@@ -1,7 +1,7 @@
 import ccxt
 from fundrive import OSSDrive
 from funsecret import read_secret
-from funtable import DriveTable
+from funtable.table import DriveTable
 
 from funcoin.coins.table.load import LoadTask
 
