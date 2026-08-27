@@ -1,6 +1,6 @@
 [project]
 name = "funcoin"
-version = "1.0.56"
+version = "1.0.57"
 description = "funcoin"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -32,6 +32,10 @@ Releases = "https://github.com/farfarfun/funcoin/releases"
 
 [dependency-groups]
 dev = [ "funbuild>=1.6.66", "pytest>=8.0.0",]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.setuptools]
 license-files = []
