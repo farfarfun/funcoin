@@ -3,7 +3,7 @@ name = "funcoin"
 version = "1.0.55"
 description = "funcoin"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [ "ccxt>=4.4.18", "farfundb>=1.2.3", "fundrive[oss]>=2.0.86", "fundrive-alipan>=1.2.9", "funserver>=1.0.38", "funshell>=1.0.19", "funtable>=1.0.46", "funfile>=1.0.39", "funsecret>=1.4.84", "orjson>=3.10.10", "pandas>=2.2.0",]
 [[project.authors]]
 name = "牛哥"
@@ -31,7 +31,7 @@ Repository = "https://github.com/farfarfun/funcoin"
 Releases = "https://github.com/farfarfun/funcoin/releases"
 
 [dependency-groups]
-dev = [ "funbuild>=1.6.66",]
+dev = [ "funbuild>=1.6.66", "pytest>=8.0.0",]
 
 [tool.setuptools]
 license-files = []
