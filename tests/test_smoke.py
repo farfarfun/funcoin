@@ -53,34 +53,19 @@ def test_import_coins_task_download():
     assert hasattr(download, "download_daily")
 
 
-def _funserver_base_available():
-    try:
-        import funserver.base  # noqa: F401
-
-        return True
-    except ModuleNotFoundError:
-        return False
-
-
-FUNSERVER_BASE_SKIP_REASON = (
-    "已安装的 funserver 版本已将 funserver.base 迁移/移除"
-    "（当前只提供 funserver.servers.base），而 funcoin.server.run / "
-    "funcoin.server.download 仍在使用旧的 `from funserver.base import "
-    "BaseServer, server_parser` 导入路径，属于上游依赖 API 变更导致的真实"
-    "导入期 bug（ModuleNotFoundError），非本次冒烟测试范围内可修复的问题，"
-    "此处显式跳过并在 issue 中报告。"
-)
-
-
-@pytest.mark.skipif(not _funserver_base_available(), reason=FUNSERVER_BASE_SKIP_REASON)
 def test_import_server_run():
+    """farfarfun/todo-list#157: funcoin.server.run used to import
+    `from funserver.base import BaseServer, server_parser`, but that module
+    was renamed/moved to `funserver.servers.base` upstream, and
+    `server_parser()` itself changed from returning an argparse
+    (parser, subparsers) pair to a single Typer app. Both the import path
+    and the call site have been updated to match."""
     import funcoin.server.run as run  # noqa: F401
 
     assert hasattr(run, "FunCoin")
     assert hasattr(run, "funcoin")
 
 
-@pytest.mark.skipif(not _funserver_base_available(), reason=FUNSERVER_BASE_SKIP_REASON)
 def test_import_server_download():
     import funcoin.server.download as download  # noqa: F401
 
@@ -216,10 +201,6 @@ def test_download_daily_requires_real_credentials():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(
-    not _funserver_base_available(),
-    reason=FUNSERVER_BASE_SKIP_REASON + "（CLI 入口 funcoin 无法启动）",
-)
 def test_cli_funcoin_help():
     result = subprocess.run(
         [sys.executable, "-c", "from funcoin.server.run import funcoin; import sys; sys.argv=['funcoin', '--help']; funcoin()"],
@@ -230,10 +211,6 @@ def test_cli_funcoin_help():
     assert result.returncode == 0, result.stderr
 
 
-@pytest.mark.skipif(
-    not _funserver_base_available(),
-    reason=FUNSERVER_BASE_SKIP_REASON + "（CLI 入口 funcoin-download 无法启动）",
-)
 def test_cli_funcoin_download_help():
     result = subprocess.run(
         [
@@ -247,3 +224,22 @@ def test_cli_funcoin_download_help():
         timeout=30,
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_cli_funcoin_download_subcommand_help():
+    """funcoin's Typer app gets an extra `download` command grafted on
+    (funcoin.coins.task.download.download_daily, exposed with a --days
+    option) on top of the base server_parser() commands."""
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from funcoin.server.run import funcoin; import sys; "
+            "sys.argv=['funcoin', 'download', '--help']; funcoin()",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "--days" in result.stdout

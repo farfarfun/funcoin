@@ -1,6 +1,6 @@
 from funshell import run_shell_list
 from funcoin.coins.task.download import download_daily
-from funserver.base import BaseServer, server_parser
+from funserver.servers.base import BaseServer, server_parser
 
 
 class FunCoin(BaseServer):
@@ -16,12 +16,10 @@ class FunCoin(BaseServer):
 
 def funcoin():
     server = FunCoin()
-    parser, subparsers = server_parser(server)
+    app = server_parser(server)
 
-    build_parser1 = subparsers.add_parser("download", help="download daily")
-    build_parser1.add_argument("--days", default=365, help="days")
-    build_parser1.set_defaults(func=download_daily)
+    @app.command()
+    def download(days: int = 365):
+        download_daily(days=days)
 
-    args = parser.parse_args()
-    params = vars(args)
-    args.func(**params)
+    app()

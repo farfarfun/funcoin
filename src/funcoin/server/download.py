@@ -1,6 +1,6 @@
 from funshell import run_shell_list
 from funcoin.coins.task.download import download_daily
-from funserver.base import BaseServer, server_parser
+from funserver.servers.base import BaseServer, server_parser
 
 
 class FunCoinDownload(BaseServer):
@@ -16,8 +16,5 @@ class FunCoinDownload(BaseServer):
 
 def funcoin_download():
     server = FunCoinDownload()
-    parser, subparsers = server_parser(server)
-
-    args = parser.parse_args()
-    params = vars(args)
-    args.func(**params)
+    app = server_parser(server)
+    app()
