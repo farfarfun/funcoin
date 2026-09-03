@@ -11,7 +11,8 @@ class FunCoin(BaseServer):
         run_shell_list(["pip install funcoin -U"])
 
     def run(self, *args, **kwargs):
-        pass
+        """作为服务运行时执行一次每日行情下载（等价于 `funcoin download` 的默认参数）。"""
+        download_daily()
 
 
 def funcoin():

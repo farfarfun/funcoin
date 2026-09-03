@@ -11,6 +11,7 @@ import sys
 import os
 from unittest.mock import MagicMock
 
+import ccxt
 import pytest
 
 
@@ -157,6 +158,121 @@ def test_trade_loader_construct_with_mocked_exchange(tmp_path):
         loader._close()
 
 
+def test_kline_loader_load_symbol_success_path(tmp_path):
+    """成功路径：fetch_ohlcv 先返回一批数据，随后返回空列表结束抓取。"""
+    from funcoin.coins.base.loader import KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    exchange.fetch_ohlcv.side_effect = [[[1000, 1, 2, 3, 4, 5]], []]
+    exchange.sort_by.side_effect = lambda data, key: data
+
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=0, unix_end=100000)
+    try:
+        loader._load_symbol("BTC/USDT")
+        loader.write_data([], cache=False)  # flush 剩余缓存
+    finally:
+        loader._close()
+
+    assert exchange.fetch_ohlcv.call_count == 2
+    exchange.sleep.assert_not_called()
+    with open(csv_path) as f:
+        content = f.read()
+    assert "BTC/USDT" in content
+
+
+def test_kline_loader_load_symbol_empty_result_boundary(tmp_path):
+    """边界路径：unix_start 已经 >= unix_end，直接跳过，不发起任何请求。"""
+    from funcoin.coins.base.loader import KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=1000, unix_end=1000)
+    try:
+        loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    exchange.fetch_ohlcv.assert_not_called()
+
+
+def test_kline_loader_load_symbol_network_error_path(tmp_path):
+    """异常路径：请求出错时记录带上下文的日志并 sleep，随后恢复继续抓取。"""
+    from funcoin.coins.base.loader import KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    exchange.id = "binance"
+    exchange.fetch_ohlcv.side_effect = [Exception("boom"), []]
+
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=0, unix_end=100000)
+    try:
+        loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    assert exchange.fetch_ohlcv.call_count == 2
+    exchange.sleep.assert_called_once_with(1000)
+
+
+def test_trade_loader_load_symbol_success_path(tmp_path):
+    """成功路径：fetch_trades 返回一笔成交，随后返回空列表推进游标直至越界退出。"""
+    from funcoin.coins.base.loader import TradeLoader
+
+    one_hour = 3600 * 1000
+    csv_path = os.path.join(str(tmp_path), "trade.csv")
+    exchange = MagicMock()
+    exchange.fetch_trades.side_effect = [
+        [
+            {
+                "symbol": "BTC/USDT",
+                "id": "trade-1",
+                "timestamp": 1000,
+                "side": "buy",
+                "price": 100.0,
+                "amount": 1,
+            }
+        ],
+        [],
+    ]
+
+    loader = TradeLoader(exchange, csv_path=csv_path, unix_start=0, unix_end=one_hour)
+    pbr = MagicMock()
+    try:
+        loader._load_symbol("BTC/USDT", pbr=pbr)
+        loader.write_data([], cache=False)
+    finally:
+        loader._close()
+
+    assert exchange.fetch_trades.call_count == 2
+    exchange.sleep.assert_not_called()
+    with open(csv_path) as f:
+        content = f.read()
+    assert "trade-1" in content
+
+
+def test_trade_loader_load_symbol_network_error_path(tmp_path):
+    """异常路径：ccxt.NetworkError 时记录带上下文的日志并 sleep，之后越界正常退出。"""
+    from funcoin.coins.base.loader import TradeLoader
+
+    one_hour = 3600 * 1000
+    csv_path = os.path.join(str(tmp_path), "trade.csv")
+    exchange = MagicMock()
+    exchange.id = "binance"
+    exchange.fetch_trades.side_effect = [ccxt.NetworkError("boom"), []]
+
+    loader = TradeLoader(exchange, csv_path=csv_path, unix_start=0, unix_end=one_hour)
+    pbr = MagicMock()
+    try:
+        loader._load_symbol("BTC/USDT", pbr=pbr)
+    finally:
+        loader._close()
+
+    assert exchange.fetch_trades.call_count == 2
+    exchange.sleep.assert_called_once_with(1000)
+
+
 # ---------------------------------------------------------------------------
 # funcoin.coins.table.load
 # ---------------------------------------------------------------------------
@@ -184,16 +300,120 @@ def test_load_task_construct():
     assert task.exchange is exchange
 
 
+def test_load_task_download_success_uploads_and_cleans_up(tmp_path, monkeypatch):
+    """成功路径：压缩、上传后本地临时 csv/tar 文件都应被清理。"""
+    from funcoin.coins.table.load import FileProperty, LoadTask
+
+    monkeypatch.chdir(tmp_path)
+    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily("20260101")
+    with open(file_pro.file_path_csv, "w") as f:
+        f.write("symbol,timestamp\nBTC/USDT,1000\n")
+
+    loader = MagicMock()
+    table = MagicMock()
+    task = LoadTask(table=table, exchange=MagicMock())
+
+    result = task.download(loader, file_pro)
+
+    assert result is True
+    loader.load_symbols.assert_called_once()
+    table.upload.assert_called_once_with(
+        file=file_pro.file_path_tar, partition=file_pro.partition, overwrite=True
+    )
+    assert not os.path.exists(file_pro.file_path_csv)
+    assert not os.path.exists(file_pro.file_path_tar)
+
+
+def test_load_task_download_cleans_up_on_upload_failure(tmp_path, monkeypatch):
+    """失败清理路径：上传抛异常时，本地临时文件仍要被清理，且异常继续向上传播。"""
+    from funcoin.coins.table.load import FileProperty, LoadTask
+
+    monkeypatch.chdir(tmp_path)
+    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily("20260102")
+    with open(file_pro.file_path_csv, "w") as f:
+        f.write("symbol,timestamp\nBTC/USDT,1000\n")
+
+    loader = MagicMock()
+    table = MagicMock()
+    table.upload.side_effect = RuntimeError("upload failed")
+    task = LoadTask(table=table, exchange=MagicMock())
+
+    with pytest.raises(RuntimeError, match="upload failed"):
+        task.download(loader, file_pro)
+
+    assert not os.path.exists(file_pro.file_path_csv)
+    assert not os.path.exists(file_pro.file_path_tar)
+
+
+def test_load_task_run_boundary_zero_days_is_noop():
+    """边界路径：days=0 时不应下载任何一天的数据。"""
+    from funcoin.coins.table.load import LoadTask
+
+    table = MagicMock()
+    table.partition_meta.return_value = []
+    exchange = MagicMock()
+    exchange.name = "Binance"
+    task = LoadTask(table=table, exchange=exchange)
+    task.download_kline = MagicMock()
+
+    task.run(days=0)
+
+    task.download_kline.assert_not_called()
+
+
+def test_load_task_run_skips_existing_partition():
+    """已存在的分区应跳过下载，避免重复拉取。"""
+    from datetime import datetime, timedelta
+
+    from funcoin.coins.table.load import FileProperty, LoadTask
+
+    table = MagicMock()
+    exchange = MagicMock()
+    exchange.name = "Binance"
+    task = LoadTask(table=table, exchange=exchange)
+    task.download_kline = MagicMock()
+
+    target_day = datetime.now() - timedelta(days=2)
+    existing_tar = (
+        FileProperty("binance").daily(target_day.strftime("%Y%m%d")).file_path_tar
+    )
+    table.partition_meta.return_value = [{"name": existing_tar}]
+
+    task.run(days=1)
+
+    task.download_kline.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # funcoin.coins.task.download
 # ---------------------------------------------------------------------------
 
 
-def test_download_daily_requires_real_credentials():
-    """download_daily() 内部直接构造真实 ccxt.binance 客户端、读取
-    funsecret 中的 API Key/Secret，并登录真实 OSS，无法在不改动源码的
-    情况下进行有意义的 mock 化冒烟测试，因此显式跳过。"""
-    pytest.skip("需要真实凭据（币安 API Key / OSS 账号），跳过")
+def test_download_daily_wires_components_without_network(monkeypatch):
+    """用 mock 替身验证 download_daily() 的编排逻辑，不发起任何真实网络请求
+    /交易所调用/云存储登录。"""
+    import funcoin.coins.task.download as download_mod
+
+    fake_exchange = MagicMock()
+    fake_drive = MagicMock()
+    fake_table = MagicMock()
+    fake_task = MagicMock()
+
+    monkeypatch.setattr(
+        download_mod.ccxt, "binance", MagicMock(return_value=fake_exchange)
+    )
+    monkeypatch.setattr(download_mod, "read_secret", MagicMock(return_value="fake"))
+    monkeypatch.setattr(download_mod, "OSSDrive", MagicMock(return_value=fake_drive))
+    monkeypatch.setattr(download_mod, "DriveTable", MagicMock(return_value=fake_table))
+    fake_load_task_cls = MagicMock(return_value=fake_task)
+    monkeypatch.setattr(download_mod, "LoadTask", fake_load_task_cls)
+
+    download_mod.download_daily(days=5)
+
+    fake_drive.login.assert_called_once()
+    fake_table.update_partition_meta.assert_called_once()
+    fake_load_task_cls.assert_called_once_with(table=fake_table, exchange=fake_exchange)
+    fake_task.run.assert_called_once_with(days=5)
 
 
 # ---------------------------------------------------------------------------

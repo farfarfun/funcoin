@@ -1,10 +1,12 @@
 [project]
 name = "funcoin"
 version = "1.0.57"
-description = "funcoin"
+description = "基于 ccxt 的加密货币行情采集工具：按天拉取交易所 K 线/成交数据，打包后上传到云存储"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [ "ccxt>=4.4.18", "fundrive[oss]>=2.0.86", "funserver>=1.0.38", "funshell>=1.0.19", "funtable>=1.0.46", "funfile>=1.0.39", "funsecret>=1.4.84", "orjson>=3.10.10", "pandas>=2.2.0",]
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [ "ccxt>=4.4.18", "fundrive[oss]>=2.0.86", "funserver>=1.0.38", "funshell>=1.0.19", "funtable>=1.0.46", "funfile>=1.0.39", "funsecret>=1.4.84", "farlog>=1.1.8", "orjson>=3.10.10", "pandas>=2.2.0", "tqdm>=4.60.0",]
 [[project.authors]]
 name = "牛哥"
 email = "niuliangtao@qq.com"
@@ -36,6 +38,3 @@ dev = [ "funbuild>=1.6.66", "pytest>=8.0.0",]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.setuptools]
-license-files = []
