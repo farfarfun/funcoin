@@ -1,10 +1,9 @@
 import json
-import logging
-from typing import Dict, Optional
 
 import requests
-from funcoin.okex.common import exceptions
+from farlog import getLogger
 from funcoin.okex import utils
+from funcoin.okex.common import exceptions
 from funcoin.okex.types import Response
 
 GET = "GET"
@@ -12,9 +11,10 @@ POST = "POST"
 DELETE = "DELETE"
 API_URL = "https://www.okex.com"
 SERVER_TIMESTAMP_URL = "/api/general/v5/time"
+logger = getLogger("funcoin.okex.client")
 
 
-class BaseClient(object):
+class BaseClient:
     def __init__(
         self,
         api_key,
@@ -65,11 +65,10 @@ class BaseClient(object):
         if self.test:
             header["x-simulated-trading"] = "1"
         if self.first:
-            print("url:", url)
+            logger.info(f"请求 OKX API url={url}")
             self.first = False
 
-        logging.debug("url: " + url)
-        logging.debug("body: " + body)
+        logger.debug(f"请求 OKX API url={url}")
 
         # send request
         response = None
@@ -101,9 +100,8 @@ class BaseClient(object):
                 try:
                     r["before"] = res_header["OK-BEFORE"]
                     r["after"] = res_header["OK-AFTER"]
-                except Exception as e:
-                    logging.warning(f"error:{e}")
-                    pass
+                except KeyError:
+                    logger.warning(f"OKX 响应缺少游标响应头 url={url}")
                 return Response(response.json()), r
             else:
                 return Response(response.json())
@@ -135,7 +133,7 @@ class BaseClient(object):
     def set_api_url(self, url: str):
         self.api_url = url
 
-    def set_proxy(self, proxy: Optional[Dict]):
+    def set_proxy(self, proxy: dict | None):
         self.proxy = proxy
 
 

@@ -6,9 +6,10 @@ from funtable.table import DriveTable
 from funcoin.coins.table.load import LoadTask
 
 
-def download_daily(days=800, *arge, **kwargs):
+def download_daily(days: int = 800) -> None:
+    """从 Binance 下载最近指定天数的日行情并上传到 OSS。"""
     days = int(days)
-    exchange = ccxt.binance(  # noqa: F821
+    exchange = ccxt.binance(
         {
             "apiKey": read_secret("coin", "binance", "api_key"),
             "secret": read_secret("coin", "binance", "secret_key"),

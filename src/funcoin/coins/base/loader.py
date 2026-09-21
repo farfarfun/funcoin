@@ -12,6 +12,10 @@ unix_month = 2678400000
 one_hour = 3600 * 1000
 
 
+class DataLoadError(RuntimeError):
+    """交易所数据多次请求失败。"""
+
+
 class BaseLoader:
     """行情/成交数据加载器基类。
 
@@ -150,7 +154,7 @@ class KlineLoder(CCXTBaseLoader):
         Args:
             timeframe: K 线周期，如 `1m`、`1h`。
         """
-        super(KlineLoder, self).__init__(
+        super().__init__(
             fieldnames=["symbol", "timestamp", "open", "close", "low", "high", "vol"],
             *args,
             **kwargs,
@@ -159,6 +163,7 @@ class KlineLoder(CCXTBaseLoader):
 
     def _load_symbol(self, symbol: str, pbr=None, *args, **kwargs) -> None:
         unix_temp = self.unix_start
+        retries = 0
         for _ in range(1000):
             if unix_temp >= self.unix_end:
                 break
@@ -177,18 +182,25 @@ class KlineLoder(CCXTBaseLoader):
                 self.write_data(orjson.loads(df.to_json(orient="records")))
                 # time.sleep(int(self.exchange.rateLimit / 1000))
             except Exception as e:
+                retries += 1
                 logger.error(
                     f"拉取K线失败 exchange={self.exchange.id} symbol={symbol} "
                     f"timeframe={self.timeframe} since={unix_temp}: {e}"
                 )
+                if retries >= 3:
+                    raise DataLoadError(
+                        f"exchange={self.exchange.id} symbol={symbol} since={unix_temp}"
+                    ) from e
                 self.exchange.sleep(1000)
+            else:
+                retries = 0
 
 
 class TradeLoader(CCXTBaseLoader):
     """逐笔成交数据加载器。"""
 
     def __init__(self, *args, **kwargs) -> None:
-        super(TradeLoader, self).__init__(
+        super().__init__(
             fieldnames=["symbol", "id", "timestamp", "side", "price", "amount"],
             *args,
             **kwargs,

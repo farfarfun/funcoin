@@ -4,16 +4,24 @@ set -euo pipefail
 
 ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 RUN_DIR="$ROOT_DIR/.run"
-PID_FILE="$RUN_DIR/funcoin-download.pid"
-LOG_FILE="$RUN_DIR/funcoin-download.log"
 
 usage() {
-    echo "用法: $0 {start|stop|restart|run|status} {dev|prod}" >&2
+    echo "用法: $0 {start|stop|restart|run} {dev|prod}; $0 status [dev|prod]" >&2
     exit 1
 }
 
+pid_file() {
+    printf '%s/funcoin-download-%s.pid' "$RUN_DIR" "$1"
+}
+
+log_file() {
+    printf '%s/funcoin-download-%s.log' "$RUN_DIR" "$1"
+}
+
 is_running() {
-    [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null
+    local env="$1" pid_file
+    pid_file=$(pid_file "$env")
+    [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null
 }
 
 check_prod_installed() {
@@ -45,39 +53,54 @@ start_cmd() {
     local env="$1"
     if [ "$env" = "prod" ]; then
         check_prod_installed
-        python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()"
+        exec python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()"
     else
         # dev 模式强制优先加载本仓库 src/ 下的源码，避免被系统/全局环境里
         # 恰好装着的其它 funcoin 版本掩盖，保证跑的就是本地改动。
-        (cd "$ROOT_DIR" && PYTHONPATH="$ROOT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()")
+        cd "$ROOT_DIR"
+        export PYTHONPATH="$ROOT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+        exec python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()"
     fi
 }
 
 do_start() {
     local env="$1"
+    local pid_file log_file
+    pid_file=$(pid_file "$env")
+    log_file=$(log_file "$env")
     mkdir -p "$RUN_DIR"
-    if is_running; then
-        echo "funcoin-download 已在运行 (pid $(cat "$PID_FILE"))" >&2
+    if is_running "$env"; then
+        echo "funcoin-download 已在运行 (env=$env, pid $(cat "$pid_file"))" >&2
         exit 1
     fi
-    # nohup 起的是一个全新的 bash 进程，不会继承当前 shell 里的变量/函数，
-    # 必须显式 export，否则子进程里 ROOT_DIR 为空。
-    export ROOT_DIR
-    export -f start_cmd check_prod_installed
-    nohup bash -c "start_cmd '$env'" >"$LOG_FILE" 2>&1 &
-    echo $! > "$PID_FILE"
-    echo "funcoin-download 已在后台启动 (env=$env, pid $(cat "$PID_FILE"))"
+    [ "$env" = "prod" ] && check_prod_installed
+    if [ "$env" = "dev" ]; then
+        (cd "$ROOT_DIR" && PYTHONPATH="$ROOT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" \
+            nohup python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()" \
+            >"$log_file" 2>&1 & echo $! > "$pid_file")
+    else
+        nohup python3 -c "from funcoin.server.download import FunCoinDownload; FunCoinDownload().run()" \
+            >"$log_file" 2>&1 &
+        echo $! > "$pid_file"
+    fi
+    echo "funcoin-download 已在后台启动 (env=$env, pid $(cat "$pid_file"))"
 }
 
 do_stop() {
-    if ! is_running; then
-        echo "funcoin-download 未在运行" >&2
-        rm -f "$PID_FILE"
+    local env="$1" pid_file
+    pid_file=$(pid_file "$env")
+    if ! is_running "$env"; then
+        echo "funcoin-download 未在运行 (env=$env)" >&2
+        rm -f "$pid_file"
         return
     fi
-    kill "$(cat "$PID_FILE")"
-    rm -f "$PID_FILE"
-    echo "funcoin-download 已停止"
+    kill "$(cat "$pid_file")"
+    for _ in 1 2 3 4 5; do
+        is_running "$env" || break
+        sleep 1
+    done
+    rm -f "$pid_file"
+    echo "funcoin-download 已停止 (env=$env)"
 }
 
 do_run() {
@@ -87,10 +110,12 @@ do_run() {
 }
 
 do_status() {
-    if is_running; then
-        echo "funcoin-download 运行中 (pid $(cat "$PID_FILE"))"
+    local env="$1" pid_file
+    pid_file=$(pid_file "$env")
+    if is_running "$env"; then
+        echo "funcoin-download 运行中 (env=$env, pid $(cat "$pid_file"))"
     else
-        echo "funcoin-download 未运行"
+        echo "funcoin-download 未运行 (env=$env)"
     fi
 }
 
@@ -108,17 +133,23 @@ case "$action" in
         do_start "$env"
         ;;
     stop)
-        do_stop
+        do_stop "$env"
         ;;
     restart)
-        do_stop || true
+        do_stop "$env" || true
         do_start "$env"
         ;;
     run)
         do_run "$env"
         ;;
     status)
-        do_status
+        if [ -n "$env" ]; then
+            [ "$env" = "dev" ] || [ "$env" = "prod" ] || usage
+            do_status "$env"
+        else
+            do_status dev
+            do_status prod
+        fi
         ;;
     *)
         usage

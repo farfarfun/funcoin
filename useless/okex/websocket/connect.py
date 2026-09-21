@@ -1,18 +1,17 @@
 import base64
 import hmac
 import json
-import logging
 import time
 from threading import Thread
-from typing import List
 
+from farlog import getLogger
 from funcoin.okex.websocket.handle import BaseHandle
 from funcoin.okex.websocket.utils import get_local_timestamp
 from funtool.secret import read_secret
-
 from websocket import WebSocket, WebSocketException, create_connection
 
 ping_interval = 30
+logger = getLogger("funcoin.okex.websocket")
 
 
 class BaseConnect:
@@ -41,7 +40,7 @@ class BaseConnect:
         )
         self.private = private
         self.ws: WebSocket = create_connection(self.url)
-        self.handles: List[BaseHandle] = []
+        self.handles: list[BaseHandle] = []
 
     def add_handle(self, handle: BaseHandle):
         self.handles.append(handle)
@@ -64,7 +63,7 @@ class BaseConnect:
                     try:
                         self.ping()
                     except Exception as e:
-                        logging.warning(f"连接关闭，正在重连:{e}")
+                        logger.warning(f"连接关闭，正在重连:{e}")
                         self.subscribe_restart()
                     continue
 
@@ -76,7 +75,7 @@ class BaseConnect:
             try:
                 handle.solve(res)
             except Exception as e:
-                logging.info(f"error:{e}")
+                logger.error(f"处理消息失败: {e}")
 
     def ping(self):
         self.ws.send("ping")
@@ -112,26 +111,26 @@ class BaseConnect:
             login_str = json.dumps({"op": "subscribe", "args": self.channels})
 
         self.ws.send(login_str)
-        logging.info(f"send: {login_str}")
+        logger.info(f"已发送 OKX 登录/订阅请求 url={self.url} private={self.private}")
 
     def subscribe_stop(self):
         self.ws: WebSocket = create_connection(self.url)
         sub_param = {"op": "unsubscribe", "args": self.channels}
         sub_str = json.dumps(sub_param)
         self.ws.send(sub_str)
-        logging.info(f"send: {sub_str}")
+        logger.info(f"已发送 OKX 取消订阅请求 url={self.url}")
 
 
 class PublicConnect(BaseConnect):
     def __init__(self, channels, *args, **kwargs):
-        super(PublicConnect, self).__init__(
+        super().__init__(
             url="wss://ws.okx.com:8443/ws/v5/public", channels=channels, *args, **kwargs
         )
 
 
 class PrivateConnect(BaseConnect):
     def __init__(self, channels, *args, **kwargs):
-        super(PrivateConnect, self).__init__(
+        super().__init__(
             url="wss://ws.okx.com:8443/ws/v5/private",
             private=True,
             channels=channels,
@@ -142,4 +141,4 @@ class PrivateConnect(BaseConnect):
 
 class TradeConnect(PrivateConnect):
     def __init__(self, *args, **kwargs):
-        super(TradeConnect, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

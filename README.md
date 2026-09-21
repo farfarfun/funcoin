@@ -55,6 +55,13 @@ funcoin download --days 30
 
 # 以服务方式运行，内部同样调用 download_daily
 funcoin-download
+
+# 长期运行服务：dev 使用当前仓库源码，prod 使用已安装的正式包
+bash scripts/setup.sh run dev       # 前台运行
+bash scripts/setup.sh start prod    # 后台启动
+bash scripts/setup.sh status        # 同时查看 dev/prod
+bash scripts/setup.sh stop prod
+bash scripts/setup.sh restart dev
 ```
 
 ## 核心组件
