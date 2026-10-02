@@ -14,7 +14,6 @@ email = "niuliangtao@qq.com"
 [[project.authors]]
 name = "farfarfun"
 email = "farfarfun@qq.com"
-
 [[project.maintainers]]
 name = "牛哥"
 email = "niuliangtao@qq.com"
@@ -22,7 +21,6 @@ email = "niuliangtao@qq.com"
 [[project.maintainers]]
 name = "farfarfun"
 email = "farfarfun@qq.com"
-
 [project.scripts]
 funcoin = "funcoin.server.run:funcoin"
 funcoin-download = "funcoin.server.download:funcoin_download"
