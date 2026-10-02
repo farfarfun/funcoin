@@ -4,6 +4,21 @@
 
 ## [1.0.57]（当前版本）
 
+### 修复
+
+- `requires-python` 由 `>=3.10` 更正为 `>=3.12`。原声明与实际依赖矛盾：依赖
+  `fundrive[oss]>=2.0.86`，而 fundrive 自 2.0.84 起全部要求 `>=3.12`，因此已发布的
+  1.0.55 在 Python 3.10/3.11 上**根本装不上**——解析器只会报 `fundrive[oss]` 无解，
+  而不是明确告知 Python 版本不满足。同一矛盾也让 `uv lock` 在解析 win32 + 3.10/3.11
+  的组合时直接失败，导致锁文件无法重新生成（urllib3 因此卡在有漏洞的 2.7.0）。
+
+### 变更
+
+- 重新生成 `uv.lock`：传递依赖 urllib3 由 2.7.0 升到 2.8.0，修掉 GitHub dependabot 报出的
+  3 个漏洞（2 个 HIGH：`HTTPResponse.stream()/read_chunked()` 无界缓冲、HTTPS 代理的 TLS
+  配置可能被忽略；1 个 MEDIUM：chunked deflate 可进入无限循环）。同批次另有若干依赖的
+  小版本更新，均未跨大版本。
+
 ### 新增
 
 - 补充 `pyproject.toml` 中缺失的直接依赖 `farlog`、`tqdm`，并为全部依赖补上版本下限。
