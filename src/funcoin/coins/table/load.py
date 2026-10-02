@@ -100,7 +100,9 @@ class LoadTask:
             with tarfile.open(file_pro.file_path_tar, "w|xz") as tar:
                 tar.add(file_pro.file_path_csv)
             self.table.upload(
-                file=file_pro.file_path_tar, partition=file_pro.partition, overwrite=True
+                file=file_pro.file_path_tar,
+                partition=file_pro.partition,
+                overwrite=True,
             )
             return True
         finally:

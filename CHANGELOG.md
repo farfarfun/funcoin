@@ -22,6 +22,20 @@
 
 - 日志统一改用 `farlog.getLogger`，移除对 `logging`/`funutil` 的直接依赖（`coins/base/loader.py`、`coins/table/load.py`）。
 - 公开类/方法补充中文 docstring 与 Python 3.10 风格类型标注（`str | None` 等）。
+- 补齐 `src/funcoin/server/__init__.py`，让 `funcoin.server` 与 `funcoin.coins` 一样是常规包而非隐式命名空间包。
+- 按 `ruff format` 默认风格重排 `coins/table/load.py` 与 `tests/test_smoke.py`（此前 `ruff format --check` 不通过）。
+
+### 移除
+
+- 删除 `useless/` 下 113 个历史遗留 Python 文件（约 1.1 万行）。这套平行源码树引用的
+  `funcoin.base.db`、`funcoin.huobi.*`、`funcoin.okex.*`、`funcoin.server.strategy` 等模块
+  在当前 `src/funcoin/` 中均不存在，整体无法导入；其中还残留已被组织现行包取代的
+  `funtool.time`/`funtool.log`/`funtool.secret` 入口、裸 `logging` 调用、大量调试 `print`
+  以及吞掉异常的宽泛 `except Exception`。
+- 删除 `example/` 下 5 个同样不可运行的示例文件（`example_v3.py`、`example_v5.py`、
+  `market_e.py`、`okex_exmple.py`、`okex-v5.html`）。它们引用 `funcoin.okex.v5.client`、
+  `funcoin.huobi.client.market`、`funcoin.task.load`、`funcoin.coins.base.file` 等不存在的
+  模块，`example_v5.py` 还在用 `funtool.secret`。可运行的最小示例见 README。
 
 ### 废弃
 

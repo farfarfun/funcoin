@@ -106,7 +106,9 @@ def test_csv_loader_construct_and_write(tmp_path):
     )
     try:
         assert os.path.exists(csv_path)
-        loader.write_data([{"symbol": "BTC", "timestamp": 500, "price": 1}], cache=False)
+        loader.write_data(
+            [{"symbol": "BTC", "timestamp": 500, "price": 1}], cache=False
+        )
     finally:
         loader._close()
 
@@ -124,7 +126,11 @@ def test_ccxt_base_loader_construct_with_mocked_exchange(tmp_path):
     exchange = MagicMock()
 
     loader = CCXTBaseLoader(
-        exchange=exchange, csv_path=csv_path, fieldnames=["a"], unix_start=0, unix_end=1000
+        exchange=exchange,
+        csv_path=csv_path,
+        fieldnames=["a"],
+        unix_start=0,
+        unix_end=1000,
     )
     try:
         exchange.load_markets.assert_called_once()
@@ -305,7 +311,9 @@ def test_load_task_download_success_uploads_and_cleans_up(tmp_path, monkeypatch)
     from funcoin.coins.table.load import FileProperty, LoadTask
 
     monkeypatch.chdir(tmp_path)
-    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily("20260101")
+    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily(
+        "20260101"
+    )
     with open(file_pro.file_path_csv, "w") as f:
         f.write("symbol,timestamp\nBTC/USDT,1000\n")
 
@@ -329,7 +337,9 @@ def test_load_task_download_cleans_up_on_upload_failure(tmp_path, monkeypatch):
     from funcoin.coins.table.load import FileProperty, LoadTask
 
     monkeypatch.chdir(tmp_path)
-    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily("20260102")
+    file_pro = FileProperty("binance", data_type="kline", timeframe="1m").daily(
+        "20260102"
+    )
     with open(file_pro.file_path_csv, "w") as f:
         f.write("symbol,timestamp\nBTC/USDT,1000\n")
 
@@ -423,7 +433,11 @@ def test_download_daily_wires_components_without_network(monkeypatch):
 
 def test_cli_funcoin_help():
     result = subprocess.run(
-        [sys.executable, "-c", "from funcoin.server.run import funcoin; import sys; sys.argv=['funcoin', '--help']; funcoin()"],
+        [
+            sys.executable,
+            "-c",
+            "from funcoin.server.run import funcoin; import sys; sys.argv=['funcoin', '--help']; funcoin()",
+        ],
         capture_output=True,
         text=True,
         timeout=30,
