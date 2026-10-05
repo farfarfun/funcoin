@@ -1,7 +1,8 @@
 from funserver.servers.base import BaseServer, server_parser
 from funshell import run_shell_list
 
-from funcoin.coins.task.download import download_daily
+from funcoin.coins.task.download import DEFAULT_DAYS, download_daily
+from funcoin.server.scheduler import run_download_loop
 
 
 class FunCoin(BaseServer):
@@ -16,8 +17,12 @@ class FunCoin(BaseServer):
         run_shell_list(["pip install funcoin -U"])
 
     def run(self, *args: object, **kwargs: object) -> None:
-        """执行一次每日行情下载（等价于 `funcoin download` 的默认参数）。"""
-        download_daily()
+        """常驻运行：按固定间隔循环执行每日行情下载。
+
+        与 `funcoin-download` 的服务入口行为一致；只想跑一次用
+        `funcoin download`（或设环境变量 `FUNCOIN_RUN_ONCE=1`）。
+        """
+        run_download_loop()
 
 
 def funcoin() -> None:
@@ -26,7 +31,8 @@ def funcoin() -> None:
     app = server_parser(server)
 
     @app.command()
-    def download(days: int = 365):
+    def download(days: int = DEFAULT_DAYS):
+        """立即执行一次下载后退出（不进入常驻循环）。"""
         download_daily(days=days)
 
     app()

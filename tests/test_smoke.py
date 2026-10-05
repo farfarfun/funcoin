@@ -6,14 +6,14 @@
 不追求覆盖率、不做穷尽式单元测试，仅做“装完包能不能正常用”的兜底检查。
 """
 
+import os
 import subprocess
 import sys
-import os
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
 import ccxt
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # 顶层包 & 子模块导入
@@ -25,9 +25,9 @@ def test_import_top_level_package():
 
 
 def test_import_coins_subpackages():
-    import funcoin.coins  # noqa: F401
-    import funcoin.coins.base  # noqa: F401
-    import funcoin.coins.table  # noqa: F401
+    import funcoin.coins
+    import funcoin.coins.base
+    import funcoin.coins.table
     import funcoin.coins.task  # noqa: F401
 
 
@@ -61,14 +61,14 @@ def test_import_server_run():
     `server_parser()` itself changed from returning an argparse
     (parser, subparsers) pair to a single Typer app. Both the import path
     and the call site have been updated to match."""
-    import funcoin.server.run as run  # noqa: F401
+    import funcoin.server.run as run
 
     assert hasattr(run, "FunCoin")
     assert hasattr(run, "funcoin")
 
 
 def test_import_server_download():
-    import funcoin.server.download as download  # noqa: F401
+    import funcoin.server.download as download
 
     assert hasattr(download, "FunCoinDownload")
     assert hasattr(download, "funcoin_download")
@@ -185,6 +185,179 @@ def test_kline_loader_load_symbol_success_path(tmp_path):
     with open(csv_path) as f:
         content = f.read()
     assert "BTC/USDT" in content
+
+
+def test_kline_loader_maps_ccxt_ohlcv_columns_in_order(tmp_path):
+    """ccxt 的 fetch_ohlcv 固定返回 [timestamp, open, high, low, close, volume]。
+
+    原实现把列名写成 `["timestamp","open","close","low","high","vol"]`，
+    等于把 high 当成 close、close 当成 high 落盘——所有历史 K 线的收盘价都是错的。
+    """
+    from funcoin.coins.base.loader import OHLCV_COLUMNS, KlineLoder
+
+    assert OHLCV_COLUMNS == ["timestamp", "open", "high", "low", "close", "vol"]
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    # open=10, high=30, low=5, close=20, volume=99
+    exchange.fetch_ohlcv.side_effect = [[[1000, 10.0, 30.0, 5.0, 20.0, 99.0]], []]
+    exchange.sort_by.side_effect = lambda data, key: data
+
+    written: list[dict] = []
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=0, unix_end=100000)
+    loader._write = written.extend
+    try:
+        loader._load_symbol("BTC/USDT")
+        loader.write_data([], cache=False)
+    finally:
+        loader._close()
+
+    assert written == [
+        {
+            "timestamp": 1000,
+            "open": 10.0,
+            "high": 30.0,
+            "low": 5.0,
+            "close": 20.0,
+            "vol": 99.0,
+            "symbol": "BTC/USDT",
+        }
+    ]
+
+
+def test_write_data_preserves_full_float_precision(tmp_path):
+    """低价币的价格不能被截断。
+
+    原实现走 `orjson.loads(df.to_json(orient="records"))`，而 pandas 的 to_json
+    默认 double_precision=10，8.123456789e-06 会被压成 8.1235e-06（丢 5 位有效数字）。
+    """
+    from funcoin.coins.base.loader import CSVLoader
+
+    price = 8.123456789e-06
+    csv_path = os.path.join(str(tmp_path), "precision.csv")
+    written: list[dict] = []
+    loader = CSVLoader(
+        csv_path=csv_path,
+        fieldnames=["symbol", "timestamp", "price"],
+        unix_start=0,
+        unix_end=1000,
+    )
+    loader._write = written.extend
+    try:
+        loader.write_data(
+            [{"symbol": "SHIB/USDT", "timestamp": 500, "price": price}], cache=False
+        )
+    finally:
+        loader._close()
+
+    assert written[0]["price"] == price
+
+
+def test_kline_loader_advances_cursor_past_last_candle(tmp_path):
+    """`since` 是闭区间：游标必须跨过最后一根 K 线。
+
+    原实现 `unix_temp = result[-1][0]`，下一轮会把同一根 K 线再拉一次并重复写入；
+    交易所只返回一根时游标更是原地踏步，白跑满 1000 轮分页。
+    """
+    from funcoin.coins.base.loader import KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    exchange.fetch_ohlcv.side_effect = [[[1000, 1, 2, 3, 4, 5]], []]
+    exchange.sort_by.side_effect = lambda data, key: data
+
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=0, unix_end=100000)
+    try:
+        loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    second_call = exchange.fetch_ohlcv.call_args_list[1]
+    assert second_call.args[2] == 1001
+
+
+def test_kline_loader_raises_after_max_retries(tmp_path):
+    """连续失败达到上限时抛 DataLoadError，而不是无声地跑完分页上限。"""
+    from funcoin.coins.base.loader import DataLoadError, KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    exchange.id = "binance"
+    exchange.fetch_ohlcv.side_effect = Exception("boom")
+
+    loader = KlineLoder(exchange, csv_path=csv_path, unix_start=0, unix_end=100000)
+    try:
+        with pytest.raises(DataLoadError):
+            loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    assert exchange.fetch_ohlcv.call_count == 3
+
+
+def test_trade_loader_load_symbol_without_progress_bar(tmp_path):
+    """pbr 是可选参数：不传进度条时不应该 AttributeError。
+
+    `load_symbol("BTC/USDT")` 这条公开路径默认 pbr=None，原实现无条件调用
+    `pbr.set_description(...)`，必然在第一轮就炸。
+    """
+    from funcoin.coins.base.loader import TradeLoader
+
+    csv_path = os.path.join(str(tmp_path), "trade.csv")
+    exchange = MagicMock()
+    exchange.fetch_trades.side_effect = [[], []]
+
+    loader = TradeLoader(
+        exchange, csv_path=csv_path, unix_start=0, unix_end=3600 * 1000
+    )
+    try:
+        loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    assert exchange.fetch_trades.call_count == 1
+
+
+def test_trade_loader_raises_after_max_retries(tmp_path):
+    """TradeLoader 也要有重试上限，不能一直 sleep-retry 到跑满 10000 轮。"""
+    from funcoin.coins.base.loader import DataLoadError, TradeLoader
+
+    csv_path = os.path.join(str(tmp_path), "trade.csv")
+    exchange = MagicMock()
+    exchange.id = "binance"
+    exchange.fetch_trades.side_effect = ccxt.NetworkError("boom")
+
+    loader = TradeLoader(
+        exchange, csv_path=csv_path, unix_start=0, unix_end=3600 * 1000
+    )
+    try:
+        with pytest.raises(DataLoadError):
+            loader._load_symbol("BTC/USDT")
+    finally:
+        loader._close()
+
+    assert exchange.fetch_trades.call_count == 3
+
+
+def test_load_symbol_forwards_extra_positional_args(tmp_path):
+    """`load_symbol()` 转发额外位置参数时不能 TypeError。
+
+    原实现写成 `self._load_symbol(symbol=symbol, pbr=pbr, *args, **kwargs)`，
+    Python 会先把 *args 绑到形参 symbol/pbr 上，只要 args 非空就「多次赋值」报错。
+    """
+    from funcoin.coins.base.loader import BaseLoader
+
+    seen = {}
+
+    class _Loader(BaseLoader):
+        def _load_symbol(self, symbol, pbr=None, *args, **kwargs):
+            seen["symbol"] = symbol
+            seen["args"] = args
+
+    loader = _Loader(unix_start=0, unix_end=1000)
+    loader.load_symbol("BTC/USDT", None, "extra")
+
+    assert seen == {"symbol": "BTC/USDT", "args": ("extra",)}
 
 
 def test_kline_loader_load_symbol_empty_result_boundary(tmp_path):
@@ -373,7 +546,6 @@ def test_load_task_run_boundary_zero_days_is_noop():
 
 def test_load_task_run_skips_existing_partition():
     """已存在的分区应跳过下载，避免重复拉取。"""
-    from datetime import datetime, timedelta
 
     from funcoin.coins.table.load import FileProperty, LoadTask
 
@@ -383,15 +555,54 @@ def test_load_task_run_skips_existing_partition():
     task = LoadTask(table=table, exchange=exchange)
     task.download_kline = MagicMock()
 
-    target_day = datetime.now() - timedelta(days=2)
+    yesterday = datetime.now(UTC) - timedelta(days=1)
     existing_tar = (
-        FileProperty("binance").daily(target_day.strftime("%Y%m%d")).file_path_tar
+        FileProperty("binance").daily(yesterday.strftime("%Y%m%d")).file_path_tar
     )
     table.partition_meta.return_value = [{"name": existing_tar}]
 
     task.run(days=1)
 
     task.download_kline.assert_not_called()
+
+
+def test_load_task_run_starts_from_yesterday_not_the_day_before():
+    """`days=1` 必须处理**昨天**。
+
+    原实现在循环体里先 `start_day += timedelta(days=-1)` 再使用，导致 days=1
+    实际下载的是前天、最近的一天永远补不上（与 docstring 差一天）。
+    """
+    from funcoin.coins.table.load import FileProperty, LoadTask
+
+    table = MagicMock()
+    table.partition_meta.return_value = []
+    exchange = MagicMock()
+    exchange.name = "Binance"
+    task = LoadTask(table=table, exchange=exchange)
+    task.download_kline = MagicMock()
+
+    task.run(days=1)
+
+    task.download_kline.assert_called_once()
+    (file_pro,) = task.download_kline.call_args.args
+    yesterday = datetime.now(UTC) - timedelta(days=1)
+    assert (
+        file_pro.file_path_tar
+        == FileProperty("binance").daily(yesterday.strftime("%Y%m%d")).file_path_tar
+    )
+
+
+def test_file_property_daily_boundaries_are_utc():
+    """按天切分必须以 UTC 为准，否则换个时区的机器跑出的同名文件内容不一致。"""
+    from funcoin.coins.table.load import FileProperty
+
+    fp = FileProperty("binance").daily("20260101")
+
+    assert fp.start_date.tzinfo is not None
+    assert fp.start_date == datetime(2026, 1, 1, tzinfo=UTC)
+    assert fp.end_date == datetime(2026, 1, 2, tzinfo=UTC)
+    # 1767225600000 = 2026-01-01T00:00:00Z，loader 的 unix_start 就是由它换算而来。
+    assert int(fp.start_date.timestamp() * 1000) == 1767225600000
 
 
 # ---------------------------------------------------------------------------
@@ -424,6 +635,123 @@ def test_download_daily_wires_components_without_network(monkeypatch):
     fake_table.update_partition_meta.assert_called_once()
     fake_load_task_cls.assert_called_once_with(table=fake_table, exchange=fake_exchange)
     fake_task.run.assert_called_once_with(days=5)
+
+
+# ---------------------------------------------------------------------------
+# funcoin.server.scheduler —— 常驻调度循环
+# ---------------------------------------------------------------------------
+
+
+def test_run_download_loop_once_runs_exactly_one_round():
+    from funcoin.server.scheduler import run_download_loop
+
+    task = MagicMock()
+    slept: list[float] = []
+
+    rounds = run_download_loop(
+        days=3, interval=123, once=True, task=task, sleep=slept.append
+    )
+
+    assert rounds == 1
+    task.assert_called_once_with(days=3)
+    assert slept == []  # once 模式不进入休眠
+
+
+def test_run_download_loop_once_propagates_failure():
+    """一次性模式必须把异常抛出去，CLI/CI 才能拿到非零退出码。"""
+    from funcoin.server.scheduler import run_download_loop
+
+    task = MagicMock(side_effect=RuntimeError("boom"))
+
+    with pytest.raises(RuntimeError, match="boom"):
+        run_download_loop(
+            days=1, interval=1, once=True, task=task, sleep=lambda _: None
+        )
+
+
+def test_run_download_loop_keeps_running_and_sleeps_between_rounds():
+    """常驻模式：跑完一轮休眠 interval 秒后继续下一轮，单轮失败不退出服务。"""
+    from funcoin.server.scheduler import run_download_loop
+
+    calls = {"n": 0}
+    slept: list[float] = []
+
+    def task(days):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("第一轮失败，服务不应因此退出")
+
+    def sleep(seconds):
+        slept.append(seconds)
+        # 第二轮结束后的休眠里模拟收到 SIGTERM，让循环优雅退出。
+        if calls["n"] >= 2:
+            raise KeyboardInterrupt
+
+    rounds = run_download_loop(days=2, interval=3, once=False, task=task, sleep=sleep)
+
+    assert rounds == 2
+    # 休眠被切成 1 秒一片，保证 SIGTERM 之后不用等满整个 interval。
+    assert slept[:3] == [1.0, 1.0, 1.0]
+
+
+def test_run_download_loop_reads_env_defaults(monkeypatch):
+    from funcoin.coins.task.download import DEFAULT_DAYS
+    from funcoin.server import scheduler
+
+    monkeypatch.delenv("FUNCOIN_DOWNLOAD_DAYS", raising=False)
+    monkeypatch.delenv("FUNCOIN_DOWNLOAD_INTERVAL", raising=False)
+    monkeypatch.delenv("FUNCOIN_RUN_ONCE", raising=False)
+    assert scheduler.resolve_days() == DEFAULT_DAYS
+    assert scheduler.resolve_interval() == scheduler.DEFAULT_INTERVAL_SECONDS
+    assert scheduler.resolve_once() is False
+
+    monkeypatch.setenv("FUNCOIN_DOWNLOAD_DAYS", "7")
+    monkeypatch.setenv("FUNCOIN_DOWNLOAD_INTERVAL", "3600")
+    monkeypatch.setenv("FUNCOIN_RUN_ONCE", "1")
+    assert scheduler.resolve_days() == 7
+    assert scheduler.resolve_interval() == 3600
+    assert scheduler.resolve_once() is True
+
+    # 非法值回落到默认值而不是崩掉服务
+    monkeypatch.setenv("FUNCOIN_DOWNLOAD_INTERVAL", "not-a-number")
+    assert scheduler.resolve_interval() == scheduler.DEFAULT_INTERVAL_SECONDS
+    # 低于下限按下限处理，避免 interval=0 时空转
+    monkeypatch.setenv("FUNCOIN_DOWNLOAD_INTERVAL", "0")
+    assert scheduler.resolve_interval() == scheduler.MIN_RETRY_SECONDS
+
+
+def test_service_entrypoints_are_long_running():
+    """README 把 `start/run` 描述成长期运行服务，两个服务入口必须真的常驻。
+
+    `BaseServer._start()` 用 `nohup ... &` 把 run() 丢到后台，只调一次
+    download_daily() 就返回的话进程会立刻退出，status 永远显示未运行。
+    """
+    import funcoin.server.download as download_mod
+    import funcoin.server.run as run_mod
+
+    def _check(module, cls_name, monkeypatch_target):
+        called = []
+        original = module.run_download_loop
+        module.run_download_loop = lambda *a, **k: called.append(1)
+        try:
+            # object.__new__ 跳过 BaseServer.__init__（它会在 ~/.cache 下建目录）。
+            server = object.__new__(monkeypatch_target)
+            server.run()
+        finally:
+            module.run_download_loop = original
+        assert called == [1], f"{cls_name}.run() 没有进入常驻循环"
+
+    _check(download_mod, "FunCoinDownload", download_mod.FunCoinDownload)
+    _check(run_mod, "FunCoin", run_mod.FunCoin)
+
+
+def test_cli_download_default_days_matches_library_default():
+    """CLI 的 --days 默认值必须和 download_daily() 一致，不能 README 写一套、代码跑另一套。"""
+    import inspect
+
+    from funcoin.coins.task.download import DEFAULT_DAYS, download_daily
+
+    assert inspect.signature(download_daily).parameters["days"].default == DEFAULT_DAYS
 
 
 # ---------------------------------------------------------------------------

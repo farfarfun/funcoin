@@ -1,7 +1,6 @@
 import csv
 
 import ccxt
-import orjson
 import pandas as pd
 from ccxt.base.exchange import Exchange
 from farlog import getLogger
@@ -10,6 +9,17 @@ from tqdm import tqdm
 logger = getLogger("funcoin")
 unix_month = 2678400000
 one_hour = 3600 * 1000
+
+# ccxt `fetch_ohlcv()` 的返回契约，列顺序固定为
+# [timestamp, open, high, low, close, volume]（见各交易所的 `parse_ohlcv()` 实现）。
+OHLCV_COLUMNS = ["timestamp", "open", "high", "low", "close", "vol"]
+
+# 同一个 symbol 连续失败多少次后放弃，避免网络异常时无限重试。
+MAX_RETRIES = 3
+
+# 单个 symbol 最多发起多少轮分页请求，防止游标推进不了时死循环。
+MAX_KLINE_PAGES = 1000
+MAX_TRADE_PAGES = 10000
 
 
 class DataLoadError(RuntimeError):
@@ -62,7 +72,9 @@ class BaseLoader:
             pbr: 可选的进度条对象，用于更新描述信息。
         """
         self._open(*args, **kwargs)
-        self._load_symbol(symbol=symbol, pbr=pbr, *args, **kwargs)
+        # symbol/pbr 必须按位置传：`f(symbol=symbol, pbr=pbr, *args)` 会先把 *args
+        # 绑到形参 symbol/pbr 上，只要 args 非空就直接 TypeError。
+        self._load_symbol(symbol, pbr, *args, **kwargs)
         self._close(*args, **kwargs)
 
     def write_data(self, data_list: list, cache: bool = True) -> None:
@@ -82,7 +94,10 @@ class BaseLoader:
         df = df[
             (df["timestamp"] >= self.unix_start) & (df["timestamp"] <= self.unix_end)
         ]
-        self._write(orjson.loads(df.to_json(orient="records")))
+        # 不能走 `orjson.loads(df.to_json(orient="records"))`：pandas 的 to_json
+        # 默认 double_precision=10，会把价格/成交量静默截断成 10 位小数，
+        # 像 SHIB/PEPE 这类单价在 1e-8 量级的币种会直接丢掉有效数字。
+        self._write(df.to_dict(orient="records"))
         self.cache_data.clear()
 
     def __enter__(self) -> "BaseLoader":
@@ -111,7 +126,9 @@ class CSVLoader(BaseLoader):
         """
         self.csv_path = csv_path
         super().__init__(*args, **kwargs)
-        self.csv_file = open(self.csv_path, mode="w")
+        # csv 模块要求以 newline="" 打开，否则由它自己写出的 \r\n 会被文本层
+        # 再翻译一次，字段里本身带换行时还会产生无法解析的记录。
+        self.csv_file = open(self.csv_path, mode="w", newline="", encoding="utf-8")
         self.csv_writer = csv.DictWriter(
             self.csv_file, delimiter=",", fieldnames=fieldnames
         )
@@ -154,18 +171,20 @@ class KlineLoder(CCXTBaseLoader):
         Args:
             timeframe: K 线周期，如 `1m`、`1h`。
         """
-        super().__init__(
-            fieldnames=["symbol", "timestamp", "open", "close", "low", "high", "vol"],
-            *args,
-            **kwargs,
-        )
+        # 不能写成 `super().__init__(fieldnames=[...], *args, **kwargs)`：
+        # 关键字实参后再展开位置实参（ruff B026）可读性差，且位置实参仍会先于
+        # fieldnames 绑定形参，容易出现「多次赋值」的隐蔽错误。
+        kwargs.setdefault("fieldnames", ["symbol", *OHLCV_COLUMNS])
+        super().__init__(*args, **kwargs)
         self.timeframe = timeframe
 
     def _load_symbol(self, symbol: str, pbr=None, *args, **kwargs) -> None:
         unix_temp = self.unix_start
         retries = 0
-        for _ in range(1000):
+        completed = False
+        for _ in range(MAX_KLINE_PAGES):
             if unix_temp >= self.unix_end:
+                completed = True
                 break
             try:
                 result = self.exchange.fetch_ohlcv(
@@ -173,13 +192,14 @@ class KlineLoder(CCXTBaseLoader):
                 )
                 result = self.exchange.sort_by(result, 0)
                 if len(result) == 0:
+                    completed = True
                     break
-                unix_temp = result[-1][0]
-                df = pd.DataFrame(
-                    result, columns=["timestamp", "open", "close", "low", "high", "vol"]
-                )
+                # since 是闭区间：下一轮必须从最后一根 K 线之后开始，否则这根会被
+                # 重复写入；只返回一根时游标更会原地踏步，白跑满 MAX_KLINE_PAGES 轮。
+                unix_temp = result[-1][0] + 1
+                df = pd.DataFrame(result, columns=OHLCV_COLUMNS)
                 df["symbol"] = symbol
-                self.write_data(orjson.loads(df.to_json(orient="records")))
+                self.write_data(df.to_dict(orient="records"))
                 # time.sleep(int(self.exchange.rateLimit / 1000))
             except Exception as e:
                 retries += 1
@@ -187,34 +207,49 @@ class KlineLoder(CCXTBaseLoader):
                     f"拉取K线失败 exchange={self.exchange.id} symbol={symbol} "
                     f"timeframe={self.timeframe} since={unix_temp}: {e}"
                 )
-                if retries >= 3:
+                if retries >= MAX_RETRIES:
                     raise DataLoadError(
                         f"exchange={self.exchange.id} symbol={symbol} since={unix_temp}"
                     ) from e
                 self.exchange.sleep(1000)
             else:
                 retries = 0
+        if not completed:
+            # 翻页上限兜底：静默截断会产出不完整的当日数据，必须显式告警。
+            logger.warning(
+                f"K线分页达到上限 {MAX_KLINE_PAGES} 仍未覆盖整个时间区间，数据可能不完整："
+                f"exchange={self.exchange.id} symbol={symbol} "
+                f"timeframe={self.timeframe} since={unix_temp} end={self.unix_end}"
+            )
 
 
 class TradeLoader(CCXTBaseLoader):
     """逐笔成交数据加载器。"""
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            fieldnames=["symbol", "id", "timestamp", "side", "price", "amount"],
-            *args,
-            **kwargs,
+        kwargs.setdefault(
+            "fieldnames", ["symbol", "id", "timestamp", "side", "price", "amount"]
         )
+        super().__init__(*args, **kwargs)
 
     def _load_symbol(self, symbol: str, pbr=None, *args, **kwargs) -> None:
         unix_temp = self.unix_start
         previous_trade_id = None
-        for _ in range(10000):
-            pbr.set_description(f"{symbol}-{unix_temp}")
+        retries = 0
+        completed = False
+        for _ in range(MAX_TRADE_PAGES):
+            # pbr 是可选参数：`load_symbol("BTC/USDT")` 不带进度条时它就是 None，
+            # 原先无条件 .set_description() 必然 AttributeError。
+            if pbr is not None:
+                pbr.set_description(f"{symbol}-{unix_temp}")
             if unix_temp >= self.unix_end:
+                completed = True
                 break
             try:
                 trades = self.exchange.fetch_trades(symbol, unix_temp, limit=1000)
+                # 请求成功就把连续失败计数清零；不能放到 try/else 里，因为下面
+                # 两个 `continue` 分支会跳过 else 子句（Python 语言参考明确规定）。
+                retries = 0
                 if len(trades) == 0:
                     unix_temp += one_hour
                     continue
@@ -240,8 +275,21 @@ class TradeLoader(CCXTBaseLoader):
                 self.write_data(result)
                 # time.sleep(int(self.exchange.rateLimit / 1000))
             except ccxt.NetworkError as e:
+                retries += 1
                 logger.error(
                     f"拉取成交记录失败 exchange={self.exchange.id} symbol={symbol} "
                     f"since={unix_temp}: {e}"
                 )
+                # 与 KlineLoder 一致地设重试上限：交易所持续不可用时原先会一直
+                # sleep-retry 到跑满 MAX_TRADE_PAGES 轮（最坏近 3 小时）才罢休。
+                if retries >= MAX_RETRIES:
+                    raise DataLoadError(
+                        f"exchange={self.exchange.id} symbol={symbol} since={unix_temp}"
+                    ) from e
                 self.exchange.sleep(1000)
+        if not completed:
+            logger.warning(
+                f"成交记录分页达到上限 {MAX_TRADE_PAGES} 仍未覆盖整个时间区间，数据可能不完整："
+                f"exchange={self.exchange.id} symbol={symbol} "
+                f"since={unix_temp} end={self.unix_end}"
+            )

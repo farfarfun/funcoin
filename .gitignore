@@ -117,8 +117,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 */__pycache__/*
+
+# 行情数据产物与压缩包：LoadTask 会在工作目录生成 <exchange>_kline_daily_<tf>-<ds>.csv
+# 并打包成同名 .tar 后上传，正常流程会清理，异常中断时可能残留。
 *.tar
 *.csv
+*.rar
+*.zip
+*.7z
 
 # ---- AI 编码助手 ----
 # 只忽略本地状态；团队有意共享的 agent / 命令 / 规则定义仍然版本化。

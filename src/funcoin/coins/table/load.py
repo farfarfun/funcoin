@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import ccxt
 from farlog import getLogger
@@ -34,11 +34,17 @@ class FileProperty:
         self.file_format: str | None = None
 
     def daily(self, ds: str) -> "FileProperty":
-        """设置为按天切分，`ds` 为 `%Y%m%d` 格式的日期字符串。"""
+        """设置为按天切分，`ds` 为 `%Y%m%d` 格式的日期字符串（UTC 日）。
+
+        交易所的 K 线时间戳是 UTC，这里必须显式按 UTC 解释日期：原先用 naive
+        `datetime.strptime()` + `.timestamp()`，等于按**运行机器的本地时区**切天，
+        同一个 `20260101` 在 UTC+8 的机器上实际覆盖的是前一天 16:00Z~当天 16:00Z，
+        换台机器跑出来的同名文件内容还会不一样。
+        """
         self.freq = "daily"
         self.file_format = self.file_format or "%Y%m%d"
         self.par_format = self.par_format or "%Y%m"
-        self.start_date = datetime.strptime(ds, "%Y%m%d")
+        self.start_date = datetime.strptime(ds, "%Y%m%d").replace(tzinfo=UTC)
         self.end_date = self.start_date + timedelta(days=1)
         return self
 
@@ -126,30 +132,36 @@ class LoadTask:
 
     def download_trade(self, file_pro: FileProperty) -> bool:
         """拉取并上传一天的逐笔成交数据。"""
+        # TradeLoader 没有 timeframe 概念（逐笔成交不分周期），传进去只会被
+        # BaseLoader 的 **kwargs 静默吞掉，容易让人误以为生效。
         loader = TradeLoader(
             self.exchange,
             unix_start=int(file_pro.start_date.timestamp() * 1000),
             unix_end=int(file_pro.end_date.timestamp() * 1000),
             csv_path=file_pro.file_path_csv,
-            timeframe=file_pro.timeframe,
         )
         return self.download(loader, file_pro)
 
     def run(self, days: int = 365) -> None:
-        """从昨天开始往前回补 `days` 天的 K 线数据，已存在的分区跳过。"""
+        """从昨天开始往前回补 `days` 天的 K 线数据，已存在的分区跳过。
+
+        Args:
+            days: 回补天数。`days=1` 只处理昨天，`days=2` 处理昨天和前天。
+        """
         self.table.update_partition_dict()
         self.table.update_partition_meta(refresh=True)
 
-        start_day = datetime.now() - timedelta(days=1)
-        file_pro = FileProperty(self.exchange.name.lower()).daily(
-            start_day.strftime("%Y%m%d")
-        )
+        # 当天数据尚未走完，只回补到昨天为止。
+        # 不要在循环里「先减一天再使用」：那样 days=1 实际处理的是前天而不是昨天，
+        # 与文档约定差一天，最近的那一天永远补不上。
+        yesterday = datetime.now(UTC) - timedelta(days=1)
+        file_pro = FileProperty(self.exchange.name.lower())
         exists_data = dict([file["name"], file] for file in self.table.partition_meta())
 
-        for i in range(days):
-            start_day += timedelta(days=-1)
-            file_pro.daily(start_day.strftime("%Y%m%d"))
-            if file_pro.file_path_tar in exists_data.keys():
+        for offset in range(days):
+            day = yesterday - timedelta(days=offset)
+            file_pro.daily(day.strftime("%Y%m%d"))
+            if file_pro.file_path_tar in exists_data:
                 logger.info(f"{file_pro.file_path_tar} exists, skip.")
                 continue
             self.download_kline(file_pro)
