@@ -360,6 +360,41 @@ def test_load_symbol_forwards_extra_positional_args(tmp_path):
     assert seen == {"symbol": "BTC/USDT", "args": ("extra",)}
 
 
+def test_load_symbol_flushes_cache_before_closing_file(tmp_path):
+    """`load_symbol()` 收尾必须强制 flush，否则不足 10000 条的数据会被整批丢掉。
+
+    `write_data(cache=True)` 攒够 10000 条才落盘，而单 symbol 单日的数据远不到这个量；
+    原实现直接 `_close()` 关文件，产出的 CSV 只有表头。这也是 README 最小示例的回归点。
+    """
+    import csv as csv_module
+
+    from funcoin.coins.base.loader import KlineLoder
+
+    csv_path = os.path.join(str(tmp_path), "kline.csv")
+    exchange = MagicMock()
+    exchange.fetch_ohlcv.side_effect = [
+        [[1700000000000, 10.0, 30.0, 5.0, 20.0, 99.0]],
+        [],
+    ]
+    exchange.sort_by.side_effect = lambda data, key: data
+
+    loader = KlineLoder(
+        exchange,
+        csv_path=csv_path,
+        unix_start=1700000000000,
+        unix_end=1700000600000,
+    )
+    loader.load_symbol("BTC/USDT")
+
+    with open(csv_path, encoding="utf-8") as fp:
+        rows = list(csv_module.DictReader(fp))
+
+    assert len(rows) == 1
+    assert rows[0]["symbol"] == "BTC/USDT"
+    assert rows[0]["close"] == "20.0"
+    assert rows[0]["vol"] == "99.0"
+
+
 def test_kline_loader_load_symbol_empty_result_boundary(tmp_path):
     """边界路径：unix_start 已经 >= unix_end，直接跳过，不发起任何请求。"""
     from funcoin.coins.base.loader import KlineLoder

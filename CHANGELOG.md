@@ -2,7 +2,98 @@
 
 本文件记录 `funcoin` 的版本变更，按版本倒序排列。
 
+## [未发布]
+
+### 破坏性变更
+
+- **K 线字段顺序修正，旧数据需要重新下载。** `KlineLoder` 此前把 ccxt `fetch_ohlcv()`
+  返回的 6 列按 `["timestamp", "open", "high", "low", "vol", "close"]` 命名，而 ccxt 的
+  返回契约固定是 `[timestamp, open, high, low, close, volume]`（见各交易所的
+  `parse_ohlcv()`）。也就是说**此前所有已上传文件里的 `close` 列装的是成交量、`vol` 列
+  装的是收盘价**。现已改为正确的 `["timestamp", "open", "high", "low", "close", "vol"]`。
+  迁移：已落在云存储上的历史分区全部是错的，需要删除后重新回补；任何基于旧文件
+  `close`/`vol` 做出的计算都要作废重算。若暂时无法重跑，可先把旧文件的这两列对调回来
+  再使用。
+- **按日切分改为显式 UTC 口径。** `FileProperty.daily()` 此前用 naive
+  `datetime.strptime()` + `.timestamp()`，等价于按**运行机器的本地时区**切天；在 UTC+8
+  的机器上，`20260101` 这个文件实际覆盖的是 `2025-12-31 16:00Z ~ 2026-01-01 16:00Z`，
+  同名文件换台机器跑出来内容还不一样。现统一按 UTC 日切分。迁移：此前在非 UTC 机器上
+  生成的分区边界都是偏的，需要重新回补。
+- **浮点精度不再被截断。** `BaseLoader.write_data` 此前走
+  `orjson.loads(df.to_json(orient="records"))`，而 pandas 的 `to_json` 默认
+  `double_precision=10`，会把价格/成交量静默截断到 10 位小数——SHIB/PEPE 这类单价在
+  `1e-8` 量级的币种直接丢有效数字（`8.123456789e-06` 被写成 `8.1235e-06`）。改用
+  `to_dict(orient="records")` 后保留完整精度。迁移：新旧文件的数值位数会有差异，
+  做数据比对时需注意。
+
+### 修复
+
+- `BaseLoader.load_symbol` 调用的是 `self._load_symbol(symbol=symbol, pbr=pbr, *args)`：
+  `*args` 会先按位置绑到形参 `symbol`/`pbr` 上，只要 `args` 非空就必定
+  `TypeError: got multiple values for argument 'symbol'`。改为按位置传参。
+- `KlineLoder._load_symbol` 的游标推进用 `result[-1][0]`（上一批最后一根 K 线的时间戳），
+  而 ccxt 的 `since` 是**闭区间**下界，于是每轮都会把最后一根重新拉回来；一旦某轮只返回
+  一根，游标原地不动，循环永不退出。改为 `result[-1][0] + 1`，并补 `MAX_KLINE_PAGES` /
+  `MAX_TRADE_PAGES` 轮数上限兜底。
+- `KlineLoder`/`TradeLoader` 的失败重试此前没有次数上限，网络异常时会无限重试。现在连续
+  失败 `MAX_RETRIES`（3）次后抛 `DataLoadError`；未拉完就退出循环时补 WARNING 日志，
+  不再静默产出残缺文件。
+- `TradeLoader._load_symbol` 的 `retries` 归零逻辑写在 `try/else` 里，而循环体内有
+  `continue`——Python 中 `continue` 会跳过 `else` 子句，导致成功一次也不清零，偶发失败
+  会被当成连续失败累计。改为成功后立即归零。
+- `TradeLoader._load_symbol` 在 `pbr=None`（不带进度条调用）时直接 `AttributeError`，
+  现已判空。
+- `LoadTask.run()` 在循环里「先减一天再使用」，`days=1` 实际处理的是**前天**而不是昨天，
+  最近的一天永远补不上。改为从昨天开始、往前数 `days` 天。
+- `LoadTask.download_trade()` 不再向 `TradeLoader` 传 `timeframe`：逐笔成交没有周期概念，
+  这个参数只会被 `**kwargs` 静默吞掉，容易让人误以为生效。
+- `BaseLoader.load_symbol()` 收尾时补上强制 flush。`write_data()` 默认攒够 10000 条才
+  落盘，而单个 symbol 一天的数据远不到这个量，原先直接 `_close()` 会把整批缓存连同
+  文件句柄一起丢掉，只留下一个**只有表头的空 CSV**（批量入口 `load_symbols()` 因为
+  `_load_symbols()` 末尾有 flush 而不受影响）。
+- `CSVLoader` 打开 CSV 时补 `newline=""` 与 `encoding="utf-8"`，避免 Windows 下多出空行、
+  以及依赖系统默认编码。
+
+### 变更
+
+- **服务入口实现真正的常驻行为。** `funserver` 的 `_start()` 是用 `nohup` 把 `run()` 丢到
+  后台，而 `FunCoin.run()` / `FunCoinDownload.run()` 过去只是调一次 `download_daily()`
+  就返回——进程随即退出，`setup.sh status` 永远显示「未运行」。新增
+  `funcoin.server.scheduler.run_download_loop()`：按固定间隔循环执行，支持
+  SIGTERM/SIGINT 优雅退出（睡眠按 1 秒切片，可中断），常驻模式下单轮失败只记日志、
+  等下一轮重试。行为由 `FUNCOIN_DOWNLOAD_INTERVAL`（默认 86400，下限 60）、
+  `FUNCOIN_DOWNLOAD_DAYS`（默认 800）、`FUNCOIN_RUN_ONCE` 三个环境变量控制；
+  一次性下载仍可用 `funcoin download --days N`。
+- 回补天数默认值统一到 `funcoin.coins.task.download.DEFAULT_DAYS = 800`，消除此前
+  「README 写 365、`funcoin download` 默认 365、库函数默认 800」三处互相矛盾的默认值。
+- `scripts/setup.sh` 重写：用 `.run/*.pid` + `.run/*.meta`（进程启动时刻 + 命令特征串）
+  区分 `missing`/`invalid`/`stale`/`mismatch`/`running` 五种状态，PID 被复用时拒绝操作
+  而不是误杀无关进程；`prod` 启动前用隔离的 `python3 -I` + 空 `PYTHONPATH` 校验
+  `funcoin` 确实解析到 site-packages 且有对应的 distribution 元数据，editable 安装与
+  源码树一律拒绝。
+- `pyproject.toml` 显式声明 `[tool.ruff]` 规则集（`E,F,W,I,UP,B,SIM,C4,DTZ,RUF`）与
+  `[tool.pytest.ini_options]`，使 lint/测试发现结果不再依赖上层目录的配置。
+- README 重写：补充**无需任何凭据的 mock 最小示例**、`funsecret write` 的逐条凭据初始化
+  命令与键位表（明确哪些步骤需要真实 Binance/OSS 凭据）、常驻服务的环境变量表，并说明
+  bucket `farfarfun` 与表目录 `funcoin/binance_kline_daily_1m/` 当前是写死的。
+- `.gitignore` 补充 `*.rar`/`*.zip`/`*.7z`，与已有的 `*.tar`/`*.csv` 一起覆盖 `LoadTask`
+  产生的本地临时产物。
+
+### 新增
+
+- 单元测试由 27 个扩充到 43 个，覆盖 OHLCV 列序、浮点精度、游标推进、重试上限、
+  `pbr=None`、`*args` 透传、`LoadTask.run()` 的起始日、UTC 日边界、调度循环的
+  once/常驻/环境变量读取，以及「服务入口必须是阻塞的」这条回归约束。
+
 ## [1.0.57]（当前版本）
+
+### 破坏性变更
+
+- **最低 Python 版本由 3.10 提升到 3.12。** 1.0.56 之前 `requires-python` 声明
+  `>=3.10`，但那是一个**从未成立过**的声明（见下方「修复」），3.10/3.11 上实际装不上。
+  迁移：仍在 3.10/3.11 的使用方需要升级解释器到 3.12+，或继续停留在依赖
+  `fundrive[oss]<2.0.84` 的旧版本 funcoin。该版本下限由传递依赖
+  `fundrive[oss]` 决定，若组织层面决定下调，需要先降 fundrive 的 Python 下限。
 
 ### 修复
 

@@ -75,6 +75,10 @@ class BaseLoader:
         # symbol/pbr 必须按位置传：`f(symbol=symbol, pbr=pbr, *args)` 会先把 *args
         # 绑到形参 symbol/pbr 上，只要 args 非空就直接 TypeError。
         self._load_symbol(symbol, pbr, *args, **kwargs)
+        # 收尾必须强制 flush：write_data 默认攒够 10000 条才落盘，而单个 symbol
+        # 一天的数据通常远不到这个量，原先直接 _close() 会把整批数据连同文件句柄
+        # 一起丢掉，只留下一个空的 CSV（只有表头）。
+        self.write_data([], cache=False)
         self._close(*args, **kwargs)
 
     def write_data(self, data_list: list, cache: bool = True) -> None:
