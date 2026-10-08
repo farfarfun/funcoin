@@ -56,6 +56,10 @@
 
 ### 变更
 
+- `scripts/setup.sh` 迁移到单实例安装模型：`install-dev` / `install-prod [version]`
+  决定安装来源，`start` / `stop` / `restart` / `run` / `status` 不再接受
+  `dev` / `prod` 参数，并且只运行已安装的 `funcoin-download` CLI；新增 `publish` 构建入口。
+
 - **服务入口实现真正的常驻行为。** `funserver` 的 `_start()` 是用 `nohup` 把 `run()` 丢到
   后台，而 `FunCoin.run()` / `FunCoinDownload.run()` 过去只是调一次 `download_daily()`
   就返回——进程随即退出，`setup.sh status` 永远显示「未运行」。新增

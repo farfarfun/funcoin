@@ -136,21 +136,28 @@ funcoin-download run
 常驻模式下单轮失败只记日志、等下一轮重试，不会让服务退出；`FUNCOIN_RUN_ONCE=1` 时异常
 会原样抛出，便于 CI / 人工排查。
 
-用脚本管理生命周期（`dev` 跑本仓库源码，`prod` 只跑已安装的正式发布包）：
+用脚本先安装所需版本，再管理唯一的服务实例：
 
 ```bash
-bash scripts/setup.sh run dev       # 前台运行
-bash scripts/setup.sh start prod    # 后台启动
-bash scripts/setup.sh status        # 同时查看 dev/prod
-bash scripts/setup.sh stop prod
-bash scripts/setup.sh restart dev
+bash scripts/setup.sh install-dev       # 构建并安装当前源码
+bash scripts/setup.sh install-prod      # 安装最新正式版本
+bash scripts/setup.sh install-prod 1.0.57
+bash scripts/setup.sh run               # 前台运行
+bash scripts/setup.sh start             # 后台启动
+bash scripts/setup.sh status
+bash scripts/setup.sh stop
 ```
 
-脚本在 `.run/` 下维护 `*.pid` + `*.meta`（记录进程启动时刻与命令特征串）：
+`install-dev` / `install-prod [version]` 决定当前运行的是本地构建还是正式版本；
+`start` / `stop` / `restart` / `run` / `status` 不接受 `dev` / `prod` 参数，也不会回退到源码树。
+发布时使用 `bash scripts/setup.sh publish`。
+
+脚本在 `.run/` 下维护单实例的 `*.pid` + `*.meta`（记录进程启动时刻与命令特征串）：
 进程已退出的陈旧 pid 文件会被明确报告并清理；PID 还活着但身份对不上（已被别的进程复用）
 时拒绝操作并提示人工确认，不会误杀无关进程；服务确在运行时 `start` 直接拒绝重复启动。
-`prod` 启动前会用隔离的 `python3 -I` + 空 `PYTHONPATH` 校验 `funcoin` 确实解析到
-site-packages 下、且有对应的 distribution 元数据，editable 安装与源码树都会被拒绝。
+启动前会用隔离的 `python3 -I` + 空 `PYTHONPATH` 校验 `funcoin` 确实解析到
+site-packages 下、且有对应的 distribution 元数据；生命周期只调用已安装的
+`funcoin-download` CLI，editable 安装与源码树都会被拒绝。
 
 ## 核心组件
 

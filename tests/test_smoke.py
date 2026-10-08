@@ -840,3 +840,66 @@ def test_cli_funcoin_download_subcommand_help():
     )
     assert result.returncode == 0, result.stderr
     assert "--days" in result.stdout
+
+
+def test_setup_script_uses_installed_cli_without_environment_argument(tmp_path):
+    """生命周期只转发给已安装 CLI，dev/prod 只属于安装阶段。"""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    (bin_dir / "python3").write_text(
+        "#!/bin/sh\n"
+        'if [ "${1:-}" = -I ]; then\n'
+        '    if [ "${2:-}" = - ]; then\n'
+        "        cat >/dev/null\n"
+        "    else\n"
+        "        echo 1.0.57\n"
+        "    fi\n"
+        "else\n"
+        "    printf 'python:%s\\n' \"$*\"\n"
+        "fi\n",
+        encoding="utf-8",
+    )
+    (bin_dir / "funcoin-download").write_text(
+        "#!/bin/sh\nprintf 'cli:%s\\n' \"$*\"\n", encoding="utf-8"
+    )
+    (bin_dir / "funbuild").write_text(
+        "#!/bin/sh\nprintf 'funbuild:%s\\n' \"$*\"\n", encoding="utf-8"
+    )
+    for executable in bin_dir.iterdir():
+        executable.chmod(0o755)
+
+    script = os.path.join(os.path.dirname(__file__), "..", "scripts", "setup.sh")
+    env = {**os.environ, "PATH": f"{bin_dir}:/usr/bin:/bin"}
+
+    run = subprocess.run(
+        ["bash", script, "run"], capture_output=True, text=True, env=env, timeout=10
+    )
+    assert run.returncode == 0, run.stderr
+    assert run.stdout.strip() == "cli:run"
+
+    old_model = subprocess.run(
+        ["bash", script, "run", "dev"], capture_output=True, text=True, env=env
+    )
+    assert old_model.returncode != 0
+    assert "install-dev" in old_model.stderr
+
+    install_prod = subprocess.run(
+        ["bash", script, "install-prod", "1.2.3"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert install_prod.returncode == 0, install_prod.stderr
+    assert install_prod.stdout.strip() == "python:-m pip install funcoin==1.2.3"
+
+    install_dev = subprocess.run(
+        ["bash", script, "install-dev"], capture_output=True, text=True, env=env
+    )
+    assert install_dev.returncode == 0, install_dev.stderr
+    assert install_dev.stdout.strip() == "funbuild:install"
+
+    publish = subprocess.run(
+        ["bash", script, "publish"], capture_output=True, text=True, env=env
+    )
+    assert publish.returncode == 0, publish.stderr
+    assert publish.stdout.strip() == "funbuild:build"
