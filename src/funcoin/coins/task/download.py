@@ -3,11 +3,8 @@ from fundrive.drives import OSSDrive
 from funsecret import read_secret
 from funtable.table import DriveTable
 
+from funcoin.coins.constants import DEFAULT_DAYS
 from funcoin.coins.table.load import LoadTask
-
-# 默认回补天数。CLI（`funcoin download`）、常驻下载服务与库调用共用同一个常量，
-# 避免再出现「README 写 365、代码默认 800」这类自相矛盾的默认值。
-DEFAULT_DAYS = 800
 
 
 def download_daily(days: int = DEFAULT_DAYS) -> None:

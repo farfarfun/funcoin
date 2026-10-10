@@ -7,6 +7,7 @@ from funfile.compress import tarfile
 from funtable.table import DriveTable
 
 from funcoin.coins.base.loader import BaseLoader, KlineLoder, TradeLoader
+from funcoin.coins.constants import DEFAULT_DAYS
 
 logger = getLogger("funcoin")
 
@@ -142,7 +143,7 @@ class LoadTask:
         )
         return self.download(loader, file_pro)
 
-    def run(self, days: int = 365) -> None:
+    def run(self, days: int = DEFAULT_DAYS) -> None:
         """从昨天开始往前回补 `days` 天的 K 线数据，已存在的分区跳过。
 
         Args:

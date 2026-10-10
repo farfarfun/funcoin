@@ -579,6 +579,16 @@ def test_load_task_run_boundary_zero_days_is_noop():
     task.download_kline.assert_not_called()
 
 
+def test_load_task_run_default_days_matches_shared_default():
+    """直接调用 LoadTask 时也必须使用 CLI/调度器相同的回补天数。"""
+    import inspect
+
+    from funcoin.coins.table.load import LoadTask
+    from funcoin.coins.task.download import DEFAULT_DAYS
+
+    assert inspect.signature(LoadTask.run).parameters["days"].default == DEFAULT_DAYS
+
+
 def test_load_task_run_skips_existing_partition():
     """已存在的分区应跳过下载，避免重复拉取。"""
 
